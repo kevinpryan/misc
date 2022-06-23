@@ -7,12 +7,12 @@
 #SBATCH --mail-type=END
 #SBATCH --time=3-16:00:00
 #SBATCH --mem-per-cpu=60gb # memory per cpu core
-#SBATCH --array=1-28 # create a 28-task job array
+#SBATCH --array=1-34 # create a 28-task job array
 
 # script to run strandedness
 source activate strandedness
 
-cd /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001005744/strandedness_test
+cd /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001004810/strandedness_test
 
 echo "Argument provided: $1"
 
