@@ -7,18 +7,25 @@
 #SBATCH --mail-type=END
 #SBATCH --time=3-16:00:00
 #SBATCH --mem-per-cpu=60gb # memory per cpu core
-#SBATCH --array=1-34 # create a 28-task job array
+#SBATCH --array=1-47 # create a 47-task job array
 
 # script to run strandedness
 source activate strandedness
 
 cd /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001004810/strandedness_test
 
-echo "Argument provided: $1"
+file_list=$1
 
-sample=$(cut -f1 $1 | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
-read1=$(cut -f2 $1 | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
-read2=$(cut -f3 $1 | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
+if [ $# -eq 0 ]; then
+ echo "provide output of list_files.R as input"
+ exit 1
+else
+ echo "Argument provided: $1"
+fi
+
+sample=$(cut -f1 $file_list | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
+read1=$(cut -f2 $file_list | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
+read2=$(cut -f3 $file_list | tail -n +2 | sed -n ${SLURM_ARRAY_TASK_ID}p)
 
 echo "Sample: $sample"
 echo "Read 1: $read1"
