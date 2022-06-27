@@ -1,0 +1,5 @@
+sampleName,reads1,reads2,sampleType,HLAfile,sex
+sample1,/home/kevin/data/neoant_test/normal_L1_R1.fastq,/home/kevin/data/neoant_test/normal_L1_R2.fastq,normal_DNA,,NA
+sample1,/home/kevin/data/neoant_test/tumor_L2_R1.fastq,/home/kevin/data/neoant_test/tumor_L2_R2.fastq,tumor_DNA,,NA
+sample1,/home/kevin/data/neoant_test/rna_L1_R1.fastq,/home/kevin/data/neoant_test/rna_L1_R2.fastq,tumor_RNA,,NA
+
