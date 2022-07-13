@@ -1,17 +1,20 @@
 #!/bin/bash
 #SBATCH --job-name="trim"
-#SBATCH --output=logs2/%A_%a.out
-#SBATCH --error=error2/%A_%a.error
-#SBATCH -p normal
-#SBATCH --mail-user=k.ryan45@nuigalway.ie
+#SBATCH --output=logs/%A_%a.out
+#SBATCH --error=error/%A_%a.error
+#SBATCH -p normal # either normal or highmem - if you need >60GB ram, for for highmem
+#SBATCH --mail-user=your_email_address
 #SBATCH --mail-type=END
 #SBATCH --time=3-11:00:00
-#SBATCH --array=1-24
+#SBATCH --array=1-24 # initiallise 24 jobs - running trim_galore 24 times
 #SBATCH --mem-per-cpu=60gb # memory per cpu core
+
 
 start_time=$SECONDS
 
 cd /data/kryan/sw/NeoFuse
+
+# activate conda environment in which trim_galore is installed
 source activate trim
 
 INPUT_DIR=/data/bdigby/Projects/D_O_Connor/raw_reads/
@@ -32,7 +35,7 @@ outdir="/data/kryan/rna_seq_bc/trimmed_reads_2nd_half/$sample"
 echo "outdir: $outdir"
 
 # run trim galore, can also pass --fastqc to run fastqc once trimming is complete
-
+# comment out this command first to check if your filenames, samples and outdir are as expected using the echo statements above
 trim_galore \
 	--paired \
 	--gzip \

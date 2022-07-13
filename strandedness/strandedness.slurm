@@ -12,7 +12,7 @@
 # script to run strandedness
 source activate strandedness
 
-cd /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001004810/strandedness_test
+cd /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001003808/strandedness_test
 
 file_list=$1
 
