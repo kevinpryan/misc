@@ -12,9 +12,7 @@ do
     esac
 done
 
-
 source activate pyega
-
 
 mkdir -p $outdir
 
@@ -23,10 +21,11 @@ task(){
    pwd
    echo "credentials: $3"
    pyega3 -cf $3 --connections 30 fetch $1
-   echo "Subject: download script $1 finished" | sendmail youremail@domain.com
 }
 
 # add your datasets here
 for dataset in EGAD1 EGAD2 EGAD3 EGAD4; do
     task "$dataset" "$outdir" "$credentials" &
 done
+
+echo "Subject: pyega3_download_multiple_datasets.sh finished" | sendmail youremail@domain.com
