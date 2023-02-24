@@ -37,7 +37,6 @@ process GENERATE_MANIFEST {
 process RENAME_FILES{
     publishDir "$params.outdir/copied_files", mode: 'copy'
     input:
-    //path(inpath)
     path(new_filenames) // output of rename_files_general.R - GET_NEW_NAMES
     val(dna_seq_type) // params.dna_seq_method
     val(rna_seq_type) // params.rna_seq_method
@@ -54,7 +53,6 @@ process RENAME_FILES{
 
 
 // uncomment if you are using the fromPath version of the pipeline
-ch_inpath = Channel.fromPath(params.input_dir, checkIfExists: true)
 ch_infile = Channel.of(params.samplesheet)
 ch_manifest_name = Channel.of(params.manifest_name)
 ch_dataset_name = Channel.of(params.dataset_name)
