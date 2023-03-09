@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*EGAD*
+*.Rproj
+*.js
+*.css
+*.woff
+*xml*
+computations*
+CAF_rnaseq_combined_analysis.Rmd
