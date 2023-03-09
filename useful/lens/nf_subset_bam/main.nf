@@ -2,7 +2,7 @@
 nextflow.enable.dsl=2
 
 process INDEX {
-    label 'samtools_container'
+    //label 'samtools_container'
 
     publishDir "$params.outdir/idx", mode: 'copy'
 
@@ -21,7 +21,7 @@ process INDEX {
 
 process SUBSET_WITH_BED {
     
-    label 'samtools_container'
+    //label 'samtools_container'
 
     publishDir "$params.outdir/subset", mode: 'copy'
     
@@ -51,7 +51,7 @@ workflow{
         ch_bam
     )
 
-    SUBSET(
+    SUBSET_WITH_BED(
         ch_bam,
         INDEX.out.ch_idx,
         ch_bed
