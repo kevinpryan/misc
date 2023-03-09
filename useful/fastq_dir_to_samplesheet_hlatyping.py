@@ -168,11 +168,11 @@ def main(args=None):
     #    strandedness = args.STRANDEDNESS
     #seq_type = "rna"
     if args.SEQTYPE in ["rna", "dna"]:
-        seq_type = args.SEQTPYE
+        seq_type = args.SEQTYPE
     fastq_dir_to_samplesheet(
         fastq_dir=args.FASTQ_DIR,
         samplesheet_file=args.SAMPLESHEET_FILE,
-        strandedness=strandedness,
+        #strandedness=strandedness,
         seq_type=seq_type,
         read1_extension=args.READ1_EXTENSION,
         read2_extension=args.READ2_EXTENSION,
