@@ -1,6 +1,21 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
+process SORT {
+    publishDir "$params.outdir/sorted", mode: 'copy'
+    
+    input:
+    path(bam)
+
+    output:
+    path('*.sorted.bam'), emit: ch_bam_sorted
+
+    script:
+    prefix = bam.simpleName 
+    """
+    samtools sort ${bam} -o ${prefix}.sorted.bam
+    """
+}
 process INDEX {
     //label 'samtools_container'
 
@@ -47,12 +62,17 @@ ch_bam = Channel.fromPath(params.bam, checkIfExists: true)
 ch_bed = Channel.fromPath(params.bed, checkIfExists: true)
 
 workflow{
-    INDEX(
+    
+    SORT(
         ch_bam
     )
 
-    SUBSET_WITH_BED(
-        ch_bam,
+    INDEX(
+        SORT.out.ch_bam_sorted
+    )
+
+    SUBSET(
+        SORT.out.ch_bam_sorted,
         INDEX.out.ch_idx,
         ch_bed
     )   
