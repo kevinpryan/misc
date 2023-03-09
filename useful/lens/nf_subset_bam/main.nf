@@ -71,7 +71,7 @@ workflow{
         SORT.out.ch_bam_sorted
     )
 
-    SUBSET(
+    SUBSET_WITH_BED(
         SORT.out.ch_bam_sorted,
         INDEX.out.ch_idx,
         ch_bed
