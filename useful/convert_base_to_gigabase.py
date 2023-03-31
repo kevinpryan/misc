@@ -19,7 +19,7 @@ gigabases_list = []
 # create list of dictionaries containing gigabases for each sample/file
 for x in my_dict:
     gigabases_dict["Sample"] = x
-    gigabases_dict["Gigabases"] = str(round(my_dict[x]/1e9, 2))
+    gigabases_dict["Gigabases"] = str(round(my_dict[x]/1e9, 3))
     gigabases_list.append(gigabases_dict)
     gigabases_dict = {}
 
