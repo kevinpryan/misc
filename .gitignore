@@ -11,3 +11,7 @@
 computations*
 CAF_rnaseq_combined_analysis.Rmd
 work/
+.nextflow.log*
+.nextflow
+*.vcf.gz
+*.vcf
