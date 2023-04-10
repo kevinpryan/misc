@@ -15,3 +15,5 @@ work/
 .nextflow
 *.vcf.gz
 *.vcf
+*.bam*
+*positions.txt

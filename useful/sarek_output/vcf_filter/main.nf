@@ -41,6 +41,22 @@ process MUTECT2_EXTRACT_MISSENSE {
 }
 // ch_mutect_pair = Channel.fromPath("/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/**{.ann.vcf.gz,.ann.vcf.gz.tbi}",  checkIfExists: true)
 
+/*
+process GENERATE_GENOMIC_POSITIONS_MISSENSE {
+    publishDir "$params.outdir/genomic_positions_missense", mode: 'copy'
+    input:
+    path(missense_vcf)
+
+    output:
+    path("*.positions.txt"), emit: ch_genomic_postions_missense
+
+    script:
+    prefix = missense_vcf.simpleName
+    """
+    bcftools query -f '%CHROM\t%POS\n' ${missense_vcf} > ${prefix}.positions.txt
+    """
+}
+*/
 ch_mutect = Channel.fromPath("/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/**.ann.vcf.gz",  checkIfExists: true)
 
 workflow {
