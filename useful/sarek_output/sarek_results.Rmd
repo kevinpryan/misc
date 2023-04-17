@@ -1,0 +1,260 @@
+---
+title: "SNV results CAF Breast Cancer"
+author: "Kevin Ryan"
+date: "2023-04-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(biomaRt)
+library(vcfR)
+library(ggplot2)
+library(forcats)
+```
+
+```{r}
+annotate_genes <- function(df){
+
+    df$hgnc_symbol <- df$gene
+    mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl") #, host="uswest.ensembl.org")
+    info <- getBM(attributes=c("hgnc_symbol",
+                               "ensembl_gene_id_version",
+                               "chromosome_name",
+                               "start_position",
+                               "end_position",
+                               "strand",
+                               "entrezgene_description"),
+                  filters = c("hgnc_symbol"),
+                  values = df$gene,
+                  mart = mart,
+                  useCache=FALSE)
+
+    tmp <- merge(df, info, by="hgnc_symbol")
+    tmp$strand <- gsub("-1", "-", tmp$strand)
+    tmp$strand <- gsub("1", "+", tmp$strand)
+    tmp <- tmp[!grepl("CHR", tmp$chromosome_name),]
+
+    return(tmp)
+
+}
+```
+
+## Read in data
+
+```{r}
+df <- read.csv("/home/kevin/Downloads/igv interpretation - combined.csv", header = T)
+```
+
+```{r}
+df_dup <- df[duplicated(df$gene) | duplicated(df$gene, fromLast = TRUE), ]
+hist(df$VAF....)
+barplot(table(df$Call))
+table(df$Call)
+labels <- c("Ambiguous", "Fail", "Somatic")
+counts <- c(37,155,21)
+pie(counts,labels)
+piepercent<- round(100*counts/sum(counts), 1)
+
+pie(counts, labels = paste(piepercent, "%", sep = ""), main = "Somatic variant calls after filtering",col = c("blue", "red", "green"))
+      
+      #rainbow(length(counts)))
+legend("topright", legend = labels, cex = 0.8, fill = c("blue", "red", "green"))
+     
+     #rainbow(length(labels)))
+```
+
+```{r}
+df_filtered <- annotate_genes(df) %>% filter(Call == "Somatic" & RNA.filter == "PASS")
+```
+
+##### Read in annotations
+
+```{r}
+vcfin <- read.vcfR(file = "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz")
+queryMETA(vcfin)
+head(getFIX(vcfin))
+
+```
+
+```{r}
+vcftidy <- vcfR2tidy(vcfin)
+vcftidy
+#subset(vcfin, CHROM == "chr2" & POS == 27083837)
+#vcfin[vcfin@fix == "chr2"]
+
+fix_vcf <- vcfin@fix
+dim(fix_vcf)
+```
+
+```{r}
+df_filtered
+vcf_filtered <- subset(vcftidy$fix, CHROM %in% df_filtered$chr& POS %in% df_filtered$pos)
+vcf_filtered_annotations <- vcf_filtered$ANN
+
+df_list <- lapply(vcf_filtered_annotations, function(x) read.table(text = x, sep = "|", header = FALSE))
+df_combined <- do.call(cbind, df_list)
+df_list
+```
+
+```{r}
+library(VariantAnnotation)
+vcffile <- "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz"
+vcfannotate_in <- readVcf(vcffile)
+header(vcfannotate_in)
+info(vcfannotate_in)[1:4,1:5]
+```
+
+```{r}
+rng <- GRanges(seqnames = df_filtered$chr, ranges = IRanges(start = df_filtered$pos, end = df_filtered$pos), names = df_filtered$gene)
+vcf_rng <- readVcf(vcffile, "hg38", param = rng)
+```
+
+```{r}
+vcf_rng@info$ANN[[1]]
+info(header(vcf_rng))["ANN",]$Description
+```
+
+```{r}
+vcf_rng@info$CSQ[[1]][1]
+info(header(vcf_rng))["CSQ",]$Description
+
+var_split <- strsplit(vcf_rng@info$CSQ[[1]][1], split = "\\|")
+df_annotations_var1 <- data.frame(matrix(unlist(var_split), nrow = length(var_split)))
+colnames(df_annotations_var1) <- unlist(strsplit(info(header(vcf_rng))["CSQ",]$Description, split = "\\|"))[1:68]
+```
+
+```{r}
+# annotations <- vcf_rng@info$ANN
+# lst_split <- lapply(annotations, function(x) strsplit(x, split = "\\|"))
+# df_annotations <- data.frame(matrix(unlist(lst_split), ncol = length(lst_split[[1]]), byrow = TRUE))
+```
+
+```{r}
+vcf_rng@info$CSQ[[1]][1]
+info(header(vcf_rng))["CSQ",]$Description
+
+var_split <- strsplit(vcf_rng@info$CSQ[[1]][1], split = "\\|")
+df_annotations_var1 <- data.frame(matrix(unlist(var_split), nrow = length(var_split)))
+colnames(df_annotations_var1) <- unlist(strsplit(info(header(vcf_rng))["CSQ",]$Description, split = "\\|"))[1:68]
+```
+
+```{r}
+vcf_rng
+```
+
+```{r}
+genes <- df_filtered$gene
+genes[7] %in% vcf_rng@info$CSQ[[7]][2]
+grepl(vcf_rng@info$CSQ[[7]][2], genes[7])
+
+```
+
+```{r}
+for (i in 1:length(vcf_rng@info$CSQ[[7]])) {
+  print(grepl(vcf_rng@info$CSQ[[7]][i], genes[7]))
+}
+```
+
+```{r}
+info(header(vcf_rng))["CSQ",]$Description
+vars_interest <- list()
+for (i in 1:length(genes)){
+  for (j in 1:length(vcf_rng@info$CSQ[[i]])) {
+    if (grepl(genes[i], vcf_rng@info$CSQ[[i]][j]) == TRUE) {
+      vars_interest <- append(vars_interest, vcf_rng@info$CSQ[[i]][j])
+    }
+  }
+}
+names(vars_interest) <- genes
+vars_interest
+cols_annotations <- strsplit(info(header(vcf_rng))["CSQ",]$Description, split = "\\|")[[1]] 
+cols_annotations <- head(cols_annotations,-1)
+annotations_combined <- data.frame(matrix(ncol = length(cols_annotations), nrow = length(vars_interest)))
+colnames(annotations_combined) <- cols_annotations
+for (j in 1:length(vars_interest)){
+  #annotations_combined <- rbind.data.frame(annotations_combined, strsplit(vars_interest[[j]], split = "\\|")[[1]])
+  annotations_combined[j,] <- strsplit(vars_interest[[j]], split = "\\|")[[1]]
+  #print(length(strsplit(vars_interest[[j]], split = "\\|")[[1]]))
+}
+
+annotations_combined %>% dplyr::select(SYMBOL, SIFT, PolyPhen)
+```
+
+### mmr geneset kegg
+
+source: http://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_MISMATCH_REPAIR#:~:text=DNA%20mismatch%20repair%20(MMR)%20is,becoming%20permanent%20in%20dividing%20cells. 
+```{r}
+mmg_kegg <- c("POLD3","MLH3","MSH6","RPA4","LIG1","MLH1","MSH2","MSH3","PCNA","PMS2","POLD1","POLD2","POLD4","RFC1","RFC2","RFC3","RFC4","RFC5","RPA1","RPA2","RPA3","SSBP1","EXO1")
+salmon_tpm_path <- "/home/kevin/Documents/PhD/CAF_data/nfcore_results/inhouse_data_nfcore_results_version_3_8_1/star_salmon/salmon.merged.gene_tpm.tsv"
+salmon_tpm_in <- read.table(salmon_tpm_path, header = T)
+stopifnot(all(mmg_kegg %in% salmon_tpm_in$gene_name) == TRUE)
+```
+
+```{r}
+wes_samples <- as.character(c(3532,3533,4027,4028,4033,4034,4112,4113,4315,4316,4340,4341))
+colnames(salmon_tpm_in)[3:ncol(salmon_tpm_in)] <- gsub("X", "", colnames(salmon_tpm_in)[3:ncol(salmon_tpm_in)])
+to_drop <- colnames(salmon_tpm_in)[3:ncol(salmon_tpm_in)][which(!colnames(salmon_tpm_in)[3:ncol(salmon_tpm_in)] %in% wes_samples)]
+salmon_tpm_in_wes <- salmon_tpm_in %>% dplyr::select(-c(to_drop))
+```
+
+```{r}
+salmon_tpm_in_wes_mmr <- salmon_tpm_in_wes[salmon_tpm_in_wes$gene_name %in% mmg_kegg,]
+rank(salmon_tpm_in_wes_mmr[1,3:ncol(salmon_tpm_in_wes_mmr)],)
+```
+
+```{r}
+## C17orf53 == HROB
+genes_snv <- c("EMILIN1","ECI2","MDN1","NHSL1","KAT6A","USP54","C17orf53")
+salmon_tpm_in_wes[which(salmon_tpm_in$gene_name %in% genes_snv),]
+
+
+salmon_tpm_in_wes[which(salmon_tpm_in$gene_name =="TSPAN9"),]
+```
+
+source: http://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_MAPK_SIGNALING_PATHWAY
+```{r}
+mapk_pathway <- "/home/kevin/Downloads/KEGG_MAPK_SIGNALING_PATHWAY.v2023.1.Hs.tsv"
+mapk_pathway_in <- read.table(mapk_pathway, skip = 17, nrows = 1)
+mapk_pathway_in_genes <- mapk_pathway_in$V2
+mapk_pathway_in_genes_vec <- unlist(strsplit(mapk_pathway_in_genes, split = ","))
+salmon_tpm_in_wes_map <- salmon_tpm_in_wes[which(salmon_tpm_in$gene_name %in% mapk_pathway_in_genes_vec),]
+for (i in 3:ncol(salmon_tpm_in_wes_map)){
+  print(paste("median sample:", colnames(salmon_tpm_in_wes_map)[i]))
+  print(median(salmon_tpm_in_wes_map[,i]))
+}
+```
+
+```{r}
+df_fail <- df %>% filter(Call == "Fail" | Call == "Ambiguous" | RNA.filter == "FAIL")
+df_fail$Tag.s.[99] <- "MV,DN,HDR"
+tags_vector <- unlist(strsplit(df_fail$Tag.s., ","))
+
+tags_df <- data.frame(Tag = tags_vector)
+ tags_df <- tags_df %>% group_by(Tag) %>% mutate(Tag_count = n())  
+ tags_df_filtered <- tags_df[which(tags_df$Tag_count > 10),]
+ tags_df_filtered_remove_duplicates <- tags_df_filtered[!duplicated(tags_df_filtered$Tag),]
+tags_df_filtered_remove_duplicates <- tags_df_filtered_remove_duplicates[order(tags_df_filtered_remove_duplicates$Tag_count, decreasing = T),]
+tags_df_filtered_remove_duplicates$Tag_full <- c("Low variant frequency", "Short insert size", "Multiple variants", "Tumour in normal", "Low count tumour", "Ambiguous Other", "Low count normal", "Short inserts only", "RNA-seq evidence")
+ summarise_filter <- ggplot(tags_df_filtered_remove_duplicates, aes(x = fct_reorder(Tag_full, Tag_count, .desc = T), y = Tag_count)) + 
+   geom_col() +
+   xlab("") +
+   ylab("Tag count") +
+   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+         scale_y_continuous(expand = c(0,0)) +
+  theme(#panel.grid.major = element_blank(), 
+        #panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))
+   
+```
+
+
+```{r}
+ggsave(filename = "/home/kevin/Pictures/research/tags_filter_snvs.png", summarise_filter)
+```
+
