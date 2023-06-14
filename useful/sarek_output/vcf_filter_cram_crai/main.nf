@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
-
+// should also work with bam/bai file
 process BCFTOOLS_FILTER_MUTECT2_POSITIONS {
     publishDir "${params.outdir}/positions", mode: 'copy'
     input:
@@ -71,8 +71,8 @@ process SAMTOOLS_INDEX {
 //ch_vcf = Channel.fromPath(params.vcf, checkIfExists: true)
 //ch_cram = Channel.fromPath([params.cram1,params.cram2], checkIfExists: true)
 ch_vcf = Channel.fromPath(params.vcf, checkIfExists: true)
-ch_cram = Channel.fromPath(params.cram1, checkIfExists: true)
-ch_cram_crai = Channel.fromPath(params.crai1, checkIfExists: true)
+ch_cram = Channel.fromPath(params.cram2, checkIfExists: true)
+ch_cram_crai = Channel.fromPath(params.crai2, checkIfExists: true)
 ch_reference = Channel.fromPath(params.reference, checkIfExists: true)
 ch_fai = Channel.fromPath(params.reference_idx, checkIfExists: true)
 
