@@ -17,3 +17,4 @@ work/
 *.vcf
 *.bam*
 *positions.txt
+hlaprofiler/*
