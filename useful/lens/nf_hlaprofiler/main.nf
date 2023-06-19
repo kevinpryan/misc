@@ -34,6 +34,9 @@ process get_fastqs {
   """
   fastq1=${fq1}
   fastq2=${fq2}
+  ln -s \${fastq1} ${dataset}-${pat_name}-${run_name}_1.fastq.gz
+  ln -s \${fastq2} ${dataset}-${pat_name}-${run_name}_2.fastq.gz
+
   """
 }
 
@@ -62,7 +65,7 @@ process seqtk_sample {
   val parstr
 
   output:
-  tuple val(pat_name), val(run), val(dataset), path("*_1.*.subd.*.fastq.gz"), path("*_2.*.subd.*.fastq.gz"), emit: subd_fqs
+  tuple val(pat_name), val(run), val(dataset), path("*_1.subd.*.fastq.gz"), path("*_2.subd.*.fastq.gz"), emit: subd_fqs
 
   script:
   """
@@ -78,6 +81,8 @@ process seqtk_sample {
   seqtk sample -s${seed} ${parstr} ${fq2} ${count} | gzip -c > \${FQ2_OUT}${suffix}.subd.\${HR}.fastq.gz
   """
 }
+
+//   tuple val(pat_name), val(run), val(dataset), path("*_1.*.subd.*.fastq.gz"), path("*_2.*.subd.*.fastq.gz"), emit: subd_fqs
 
 process trim_galore_hlap {
 // Runs trim galore with hard trimming for HLAProfiler. Needs to be wrapped up
@@ -115,8 +120,7 @@ process trim_galore_hlap {
   val parstr
 
   output:
-  tuple val(pat_name), val(run), val(dataset), path("${dataset}-${pat_name}-${run}*_1*.trimmed*50bp_5prime.f*q.gz"), path("${dataset}-${pat_name}-${run}*_2*.trimmed*50bp_5prime.f*q.gz"), emit: procd_fqs
-
+  tuple val(pat_name), val(run), val(dataset), path("${dataset}-${pat_name}-${run}*_1*.*50bp_5prime.f*q.gz"), path("${dataset}-${pat_name}-${run}*_2*.*50bp_5prime.f*q.gz"), emit: procd_fqs
   script:
   """
   trim_galore --basename ${run} ${parstr} ${fq1} ${fq2} -j ${task.cpus}
@@ -154,7 +158,7 @@ process hlaprofiler_predict {
 
   input:
   tuple val(pat_name), val(run), val(dataset), path(fq1), path(fq2)
-  //val parstr
+  val parstr
 
   output:
   tuple val(pat_name), val(run), val(dataset), path("*HLATypes.txt"), emit: calls
@@ -171,6 +175,7 @@ process hlaprofiler_predict {
     -output_dir subwork \
     -allele_refinement all \
     -l sample.HLAProfiler.log \
+    ${parstr} \
     -threads ${task.cpus}
   mv subwork/*/*HLATypes.txt ${dataset}-${pat_name}-${run}.HLATypes.txt
   find subwork -name "*fq" -exec gzip {} \\;
@@ -179,7 +184,7 @@ process hlaprofiler_predict {
 
 //     ${parstr} \
 dataset = Channel.of(params.dataset)
-run = Channel.of(params.run)
+run_name = Channel.of(params.run)
 pat_name = Channel.of(params.pat_name)
 ch_fq1 = Channel.fromPath(params.fq1, checkIfExists: true)
 ch_fq2 = Channel.fromPath(params.fq2, checkIfExists: true)
@@ -188,8 +193,24 @@ seqtk_seed = Channel.of(params.seqtk_seed)
 seqtk_sample_suffix = Channel.of(params.seqtk_sample_suffix)
 trim_galore_hlap_parameters = Channel.of(params.trim_galore_hlap_parameters)
 hlaprofiler_parameters = Channel.of(params.hlaprofiler_parameter)
+seqtk_parameters = Channel.of(params.seqtk_parameters)
 
 /*
+workflow get_fastqs_workflow {
+    main:
+      get_fastqs_input = pat_name.merge(run_name, dataset)
+      //get_fastqs_input.view()
+      get_fastqs(
+        get_fastqs_input,
+        ch_fq1,
+        ch_fq2
+        )
+
+    emit:
+	get_fastqs.out()
+}
+*/
+
 workflow procd_fqs_to_hlaprofiler_calls {
 // require:
 //   FQS
@@ -223,10 +244,24 @@ workflow procd_fqs_to_hlaprofiler_calls {
   emit:
     calls = hlaprofiler_predict.out.calls
 }
-*/
 
 workflow {
-    get_fastqs_input = pat_name.concat(run_name, dataset)
-    get_fastqs_input.view()
-    )
+   get_fastqs_input = pat_name.merge(run_name, dataset)
+   get_fastqs(
+         get_fastqs_input,
+         ch_fq1,
+         ch_fq2
+         )
+
+   //get_fastqs(get_fastqs_input)
+   fqs = get_fastqs.out.fastqs
+   procd_fqs_to_hlaprofiler_calls(
+	fqs,
+        seqtk_read_count,
+    seqtk_seed,
+    seqtk_sample_suffix,
+    seqtk_parameters,
+    trim_galore_hlap_parameters,
+    hlaprofiler_parameters
+   )
 }
