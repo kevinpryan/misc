@@ -4,13 +4,14 @@
 #SBATCH --output=optitype.out
 #SBATCH --mail-user=k.ryan45@nuigalway.ie
 #SBATCH --mail-type=ALL
-#SBATCH -p normal
+#SBATCH -p defq
 
 start_time=$SECONDS
 
-source activate nf-core
-OPTITPE_PATH="/data4/kryan/misc/useful/lens/nf_optitype"
-cd $OPTITYPE_PATH
+source activate nf
+#OPTITPE_PATH="/define/home/kryan/misc/useful/lens/nf_optitype/"
+#cd $OPTITYPE_PATH
+cd /define/home/kryan/misc/useful/lens/nf_optitype/
 nextflow run main.nf -c nextflow.config                                                                                                 
 
 elapsed=$(( SECONDS - start_time ))

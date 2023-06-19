@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+// note: the original script is for DNA, I am using it for RNA, so hla_reference_dna.fasta was changed to hla_reference_rna.fasta
+ 
 process optitype_razers3 {
 //Technically, this is its own separate aligner, but it's a highly suggested
 //step for filtering to HLA reads.
@@ -43,7 +45,7 @@ process optitype_samtools_bam2fq {
   samtools bam2fq ${bam2} > ${dataset}-${pat_name}-${prefix}_2.fastq
   """
 }
-
+// changed --dna to --rna
 process optitype_sub {
 
   tag "${dataset}/${pat_name}/${prefix}"
@@ -62,7 +64,7 @@ process optitype_sub {
 
   script:
   """
-  python /usr/local/bin/OptiType/OptiTypePipeline.py -i ${fq1} ${fq2} --dna --outdir calls
+  python /usr/local/bin/OptiType/OptiTypePipeline.py -i ${fq1} ${fq2} --rna --outdir calls
   mv calls/*/*result.tsv ${dataset}-${pat_name}-${prefix}.optitype_calls.tsv
   """
 }

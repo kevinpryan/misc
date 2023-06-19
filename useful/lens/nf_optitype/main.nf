@@ -1,4 +1,4 @@
-include { optitype } from 'modules/optitype/optitype.nf'
+include { optitype } from './modules/optitype/optitype.nf'
 
 params.fq_dir = "${params.project_dir}/fastqs"
 params.manifest = "${params.project_dir}/files/manifest.tsv"

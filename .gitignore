@@ -18,3 +18,5 @@ work/
 *.bam*
 *positions.txt
 hlaprofiler/*
+fastqs
+.out
