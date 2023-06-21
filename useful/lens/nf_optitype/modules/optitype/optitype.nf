@@ -19,8 +19,8 @@ process optitype_razers3 {
 
   script:
   """
-  /usr/local/bin/razers3 -i 95 -m 1 -dr 0 -o ${dataset}-${pat_name}-${prefix}_1.bam /usr/local/bin/OptiType-1.3.4/data/hla_reference_dna.fasta ${fq1}&
-  /usr/local/bin/razers3 -i 95 -m 1 -dr 0 -o ${dataset}-${pat_name}-${prefix}_2.bam /usr/local/bin/OptiType-1.3.4/data/hla_reference_dna.fasta ${fq2}&
+  /usr/local/bin/razers3 -i 95 -m 1 -dr 0 -o ${dataset}-${pat_name}-${prefix}_1.bam /usr/local/bin/OptiType-1.3.4/data/hla_reference_rna.fasta ${fq1}&
+  /usr/local/bin/razers3 -i 95 -m 1 -dr 0 -o ${dataset}-${pat_name}-${prefix}_2.bam /usr/local/bin/OptiType-1.3.4/data/hla_reference_rna.fasta ${fq2}&
   wait
   """
 }
@@ -53,7 +53,7 @@ process optitype_sub {
   publishDir "${params.samps_out_dir}/${dataset}/${pat_name}/${prefix}/optitype"
   label 'optitype_container_alt'
   label 'optitype'
-  containerOptions '--cleanenv --no-home -B /datastore'
+  containerOptions '--cleanenv --no-home -B /home'
 
   input:
   tuple val(pat_name), val(prefix), val(dataset), path(fq1), path(fq2)
@@ -68,6 +68,9 @@ process optitype_sub {
   mv calls/*/*result.tsv ${dataset}-${pat_name}-${prefix}.optitype_calls.tsv
   """
 }
+
+  //containerOptions '--cleanenv --no-home -B /datastore'
+
 
 workflow optitype {
   take:

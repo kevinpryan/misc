@@ -47,7 +47,8 @@ annotate_genes <- function(df){
 ## Read in data
 
 ```{r}
-df <- read.csv("/home/kevin/Downloads/igv interpretation - combined.csv", header = T)
+#df <- read.csv("/home/kevin/Downloads/igv interpretation - combined.csv", header = T)
+df <- read.csv("/home/rstudio/Downloads/igv interpretation - combined.csv", header = T)
 ```
 
 ```{r}
@@ -69,15 +70,14 @@ legend("topright", legend = labels, cex = 0.8, fill = c("blue", "red", "green"))
 ```
 
 ```{r}
-df_filtered <- annotate_genes(df) %>% filter(Call == "Somatic" & RNA.filter == "PASS")
+df_filtered <- annotate_genes(df) %>% dplyr::filter(Call == "Somatic" & RNA.filter == "PASS")
 ```
 
 ##### Read in annotations
 
 ```{r}
-vcfin <- read.vcfR(file = "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz")
-queryMETA(vcfin)
-head(getFIX(vcfin))
+#vcfin <- read.vcfR(file = "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz")
+vcfin <- read.vcfR(file = "/home/rstudio/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz")
 
 ```
 
@@ -103,7 +103,8 @@ df_list
 
 ```{r}
 library(VariantAnnotation)
-vcffile <- "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz"
+#vcffile <- "/home/kevin/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz"
+vcffile <- "/home/rstudio/Documents/PhD/wes_bc/nfcore_sarek_results/annotation/mutect2/4027_vs_4028/4027_vs_4028.mutect2.filtered_snpEff_VEP.ann.vcf.gz"
 vcfannotate_in <- readVcf(vcffile)
 header(vcfannotate_in)
 info(vcfannotate_in)[1:4,1:5]
@@ -205,6 +206,12 @@ salmon_tpm_in_wes <- salmon_tpm_in %>% dplyr::select(-c(to_drop))
 ```{r}
 salmon_tpm_in_wes_mmr <- salmon_tpm_in_wes[salmon_tpm_in_wes$gene_name %in% mmg_kegg,]
 rank(salmon_tpm_in_wes_mmr[1,3:ncol(salmon_tpm_in_wes_mmr)],)
+
+for (i in 3:ncol(salmon_tpm_in_wes_mmr)){
+  print(paste("median sample:", colnames(salmon_tpm_in_wes_mmr)[i]))
+  print(median(salmon_tpm_in_wes_mmr[,i]))
+}
+
 ```
 
 ```{r}
@@ -244,17 +251,107 @@ tags_df_filtered_remove_duplicates$Tag_full <- c("Low variant frequency", "Short
    geom_col() +
    xlab("") +
    ylab("Tag count") +
-   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
-         scale_y_continuous(expand = c(0,0)) +
-  theme(#panel.grid.major = element_blank(), 
-        #panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"))
+   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, face = "bold", size = 10), panel.background = element_blank(),
+        axis.line = element_line(colour = "black"))+
+         scale_y_continuous(expand = c(0,0)) #+
+  #theme(#panel.grid.major = element_blank(), 
+   #     #panel.grid.minor = element_blank(),
+    #    panel.background = element_blank(),
+     #   axis.line = element_line(colour = "black"))
    
 ```
 
+```{r}
+summarise_filter
+```
 
 ```{r}
-ggsave(filename = "/home/kevin/Pictures/research/tags_filter_snvs.png", summarise_filter)
+#ggsave(filename = "/home/kevin/Pictures/research/tags_filter_snvs2.png", summarise_filter, dpi = 1000)
+#ggsave(filename = "/home/kevin/Pictures/research/tags_filter_snvs.svg", summarise_filter)
+
 ```
+look at wnt pathway
+source: http://www.gsea-msigdb.org/gsea/msigdb/cards/KEGG_WNT_SIGNALING_PATHWAY
+```{r}
+wnt_pathway <- "/home/kevin/Downloads/KEGG_WNT_SIGNALING_PATHWAY.v2023.1.Hs.tsv"
+wnt_pathway_in <- read.table(wnt_pathway, skip = 17, nrows = 1)
+wnt_pathway_in_genes <- wnt_pathway_in$V2
+wnt_pathway_in_genes_vec <- unlist(strsplit(wnt_pathway_in_genes, split = ","))
+salmon_tpm_in_wes_wnt <- salmon_tpm_in_wes[which(salmon_tpm_in$gene_name %in% wnt_pathway_in_genes_vec),]
+for (i in 3:ncol(salmon_tpm_in_wes_wnt)){
+  print(paste("median sample:", colnames(salmon_tpm_in_wes_wnt)[i]))
+  print(median(salmon_tpm_in_wes_wnt[,i]))
+}
+salmon_tpm_in_wes_wnt
+```
+
+gene signature containing emilin1. Source: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9229147/
+```{r}
+sig <- c("COL1A1", "COL5A1", "ITGA4", "EMILIN1","TSPAN9")
+salmon_tpm_in_wes_emilin1 <- salmon_tpm_in_wes[which(salmon_tpm_in$gene_name %in% sig),]
+
+```
+
+```{r Read in metadata}
+library(here)
+#metadata <- read.csv(file = "/home/kevin/Documents/PhD/subtypes/caf-subtype-analysis/intermediate_files/metadata/reformat_samples_extra_info.csv")
+metadata <- read.csv(file = "/home/rstudio/Documents/PhD/subtypes/caf-subtype-analysis/intermediate_files/metadata/reformat_samples_extra_info.csv")
+colnames(metadata)[1] <- "Mixture"
+metadata$Mixture <- as.character(metadata$Mixture)
+metadata$Condition <- ifelse(metadata$Condition == "Tumour", "CAF", "TAN")
+wes_samples <- as.character(c(3532,3533,4027,4028,4033,4034,4112,4113,4315,4316,4340,4341))
+WES <- rep(FALSE, 24)
+for (i in 1:length(metadata$Mixture)){
+  if (metadata$Mixture[i] %in% wes_samples){
+    WES[i] <- TRUE
+  }
+}
+metadata$WES <-WES
+metadata_wes <- metadata[which(metadata$WES == TRUE),]
+range(metadata_wes$Age)
+```
+
+```{r}
+salmon_tpm_in_wes_mmr
+```
+
+```{r}
+rank(salmon_tpm_in_wes_mmr[1,3:ncol(salmon_tpm_in_wes_mmr)],)
+frac_rank <- list()
+frac_rank_dataframe <- data.frame(matrix(ncol = 12, nrow = 0))
+colnames(frac_rank_dataframe) <- colnames(salmon_tpm_in_wes_mmr)[3:ncol(salmon_tpm_in_wes_mmr)]
+
+for (i in 1:nrow(salmon_tpm_in_wes_mmr)){
+  print("frac_rank")
+  print(rank(salmon_tpm_in_wes_mmr[i,3:ncol(salmon_tpm_in_wes_mmr)])/12)
+  frac_rank_vec <- rank(salmon_tpm_in_wes_mmr[i,3:ncol(salmon_tpm_in_wes_mmr)])/12
+  frac_rank_dataframe[i,] <- frac_rank_vec # <- rbind.data.frame(frac_rank_dataframe, frac_rank_vec)
+  #frac_rank <- append(frac_rank, c(rank(salmon_tpm_in_wes_mmr[i,3:ncol(salmon_tpm_in_wes_mmr)])/12))
+  #print(paste("median sample:", colnames(salmon_tpm_in_wes_mmr)[i]))
+  #print(median(salmon_tpm_in_wes_mmr[,i]))
+}
+
+rownames(frac_rank_dataframe) <- salmon_tpm_in_wes_mmr$gene_name
+median(frac_rank_dataframe$`4027`)
+median(frac_rank_dataframe$`4028`)
+wilcox.test(frac_rank_dataframe$`4027`, frac_rank_dataframe$`4028`, paired = T)
+median(frac_rank_dataframe$`4027`)
+median(frac_rank_dataframe$`4028`)
+medians <- c()
+for (i in 1:ncol(frac_rank_dataframe)){
+  medians[i] <- median(frac_rank_dataframe[,i])
+}
+names(medians) <- colnames(frac_rank_dataframe)
+wilcox.test(salmon_tpm_in_wes_mmr$`4027`, salmon_tpm_in_wes_mmr$`4028`, paired = T)
+```
+
+```{r}
+t.test(log(salmon_tpm_in_wes_mmr$`4027`), log(salmon_tpm_in_wes_mmr$`4028`), paired = T)
+t.test(salmon_tpm_in_wes_mmr$`4027`, salmon_tpm_in_wes_mmr$`4028`, paired = T)
+shapiro.test(salmon_tpm_in_wes_mmr$`4027`)
+shapiro.test(salmon_tpm_in_wes_mmr$`4028`)
+
+wilcox.test(salmon_tpm_in_wes_mmr$`4027`, salmon_tpm_in_wes_mmr$`4028`, paired = T)
+```
+
 
