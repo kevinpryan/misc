@@ -34,10 +34,10 @@ bash Anaconda3-2021.05-Linux-x86_64.sh
 
 # conda create --yes --name pyega python=3.8
 # install pyega
-conda activate pyega
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda install --yes pyega3
+#conda activate pyega
+#conda config --add channels bioconda
+#conda config --add channels conda-forge
+#conda install --yes pyega3
 
 # install singularity
 ## dependencies
