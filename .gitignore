@@ -20,3 +20,4 @@ work/
 hlaprofiler/*
 fastqs
 .out
+nf-predict
