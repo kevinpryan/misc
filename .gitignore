@@ -21,3 +21,4 @@ hlaprofiler/*
 fastqs
 .out
 nf-predict
+outdir

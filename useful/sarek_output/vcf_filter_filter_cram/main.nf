@@ -1,97 +1,47 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-/*
-// Read in the list of VCF files
-vcf_files = Channel
-    .fromPath(params.vcf_path)
-    .map { file -> file.getName() }
-    //.view()
-// Read in the list of CRAM files
-cram_files = Channel
-    .fromPath(params.cram_path)
-    .map { file -> file.getName() }
-    //.view()
-// Combine the VCF and CRAM files based on the sample IDs
-vcf_cram_pairs = vcf_files
-    .combine(cram_files)
-    .view()
-    .map { pair ->
-        def sample_ids = pair[0].tokenize('_vs_')
-        def cram_file = cram_files.find { file -> file.startsWith(sample_ids[0]) }
-        [pair[0], cram_file, sample_ids[0], sample_ids[1]]
-    }
-    .view()
-*/
-
-/*
-vcf_files = Channel.fromPath(params.vcf_path)
-                   //.view()
-
-// Read in the list of CRAM files
-cram_files = Channel.fromPath(params.cram_path)
-                    .view()
-// Combine the VCF and CRAM files based on the sample IDs
-/*
-vcf_cram_pairs = vcf_files
-    .mix(cram_files)
-    .map { pair ->
-        def sample_ids = pair[0].tokenize('_vs_')
-        def cram_file = cram_files.find { file -> file.getName().startsWith(sample_ids[0]) }
-        [pair[0], cram_file.getName(), sample_ids[0], sample_ids[1]]
-    }
-*/
-/*
-vcf_cram_pairs = vcf_files
-    .mix(cram_files)
-    .map { pair ->
-        def sample_ids = pair[0].toString().tokenize('_vs_')
-        def cram_file = cram_files.find { file -> file.getName().startsWith(sample_ids[0]) }
-        [pair[0], cram_file.getName(), sample_ids[0], sample_ids[1]]
-    }
-    .view()
-*/
+include { VCF2BED } from './modules/reusable'
+include { SUBSET_CRAM as SUBSET_CRAM_CAF } from './modules/reusable'
+include { SUBSET_CRAM as SUBSET_CRAM_TAN } from './modules/reusable'
 
 // Read in the list of VCF files
-vcf_files = Channel.fromPath(params.vcf_path)
-    .map { file(it).getName() } // Convert to file objects and get the name
-    .view()
+
+vcf_files_caf = Channel.fromPath(params.vcf_path)
+    .map { it -> [ it.simpleName.toString().split('\\.')[0].split('\\_')[0], it, it.simpleName ] }
+
+vcf_files_tan = Channel.fromPath(params.vcf_path)
+    .map { it -> [ it.simpleName.toString().split('\\.')[0].split('\\_')[2], it, it.simpleName ] }
 // Read in the list of CRAM files
 cram_files = Channel.fromPath(params.cram_path)
-    .map { file(it).getName() } // Convert to file objects and get the name
+     .map{ it -> [ it.simpleName.toString(), it]}
+crai_files = Channel.fromPath(params.crai_path)
 
+cram_crai = cram_files
+            .join(crai_files)
 // Combine the VCF and CRAM files based on the sample IDs
-vcf_cram_pairs = vcf_files
-    .mix(cram_files)
-    .map { pair ->
-        def sample_ids = pair[0].getName().tokenize('_vs_')
-        def cram_file = cram_files.find { file(it).getName().startsWith(sample_ids[0]) }
-        [pair[0], cram_file.getName(), sample_ids[0], sample_ids[1]]
-    }
+vcf_cram_pairs_caf = cram_files
+                     .join(vcf_files_caf)
 
-// Process each VCF/CRAM pair separately
-process subset_reads {
-    publishDir "$params.outdir/mutect2_filtered_crams", mode: 'copy'
-    input:
-    path(vcf_file)
-    path(cram_file)
-    path(patient_id)
-    path(sample_id)
+vcf_cram_pairs_tan = cram_files
+                     .join(vcf_files_tan)
 
-    output:
-    path("${patient_id}_${sample_id}.cram")
+vcf_cram_combined_full = vcf_cram_pairs_caf
+                         .join(vcf_cram_pairs_tan, by:3)
+                         .unique()
 
-    script:
-    """
-    # Index the CRAM file
-    samtools index ${cram_path}/${cram_file}
+norm_vcfs_input = vcf_cram_pairs_caf
+                  .map { it -> [ it[3], it[2]]}
+                  .groupTuple()
 
-    # Extract the list of genomic positions from the VCF file
-    bcftools query -f '%CHROM:%POS\n' ${vcf_path}/${vcf_file} > positions.txt
+ch_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
+                  .collect()
 
-    # Subset the CRAM file to only include reads overlapping the positions in the VCF file
-    samtools view -L positions.txt -b ${cram_path}/${cram_file} \
-        | samtools sort -O CRAM -T tmp -o ${patient_id}_${sample_id}.cram \
-        && samtools index ${patient_id}_${sample_id}.cram
-    """
+workflow {
+    VCF2BED(norm_vcfs_input)
+    ch_bed_cram = VCF2BED.out.bed_from_vcf.join(vcf_cram_combined_full)
+    ch_bed_cram_caf = ch_bed_cram.map { it -> [it[0], it[3], it[1]] }.groupTuple()
+    ch_bed_cram_tan = ch_bed_cram.map { it -> [ it[0], it[6], it[1]]}.groupTuple()
+    SUBSET_CRAM_CAF(ch_bed_cram_caf, ch_fasta)
+    SUBSET_CRAM_TAN(ch_bed_cram_tan, ch_fasta)
 }
