@@ -22,3 +22,4 @@ fastqs
 .out
 nf-predict
 outdir
+*.bam
