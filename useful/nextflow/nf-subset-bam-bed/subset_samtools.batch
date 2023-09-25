@@ -1,0 +1,16 @@
+#!/bin/bash
+#SBATCH --time=2-16:00:00
+#SBATCH --job-name="subset"
+#SBATCH --output=samtools_view_subset2.out
+#SBATCH --mail-user=email@email.ie
+#SBATCH --mail-type=ALL
+#SBATCH -p normal
+
+# usage: bash qualimap.sh -o path_to_outdir -f full_path_to_bed_file.bed 
+# leaving out providing bams as input for now b) bam="$OPTARG";;
+
+source activate nf-core
+
+nextflow run subset_samtools.nf -c /data2/kryan/lens/samtools_view_nf/nextflow.config -resume
+
+
