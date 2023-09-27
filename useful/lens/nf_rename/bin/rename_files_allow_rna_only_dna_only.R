@@ -1,10 +1,9 @@
 #!/usr/bin/Rscript
 library(optparse)
-library(stringr)
-library(dplyr)
 
 # input file format
-# Pt-No fastq
+# no header
+# fastq,Patient_number_as_int,a/n
 
 option_list = list(
  make_option(c("-f", "--file"), type = "character", default = NULL,
@@ -27,35 +26,47 @@ if (length(opt) < 1) {
   stop("must specify infile at least", call. = FALSE)
 }
 
+library(stringr)
+library(dplyr)
+
 file <- opt$file
 if (opt$dna == TRUE){
     dna <- opt$type_dna
-    opt_dna <- TRUE
+    #opt_dna <- TRUE
     if (!(dna %in% c("WES", "WGS", "WXS"))){
     print_help(opt_parser)
     stop("dna must be one of WGS, WXS, WES", call. = FALSE)
     start_normal_dna <- "nd-"
     start_abnormal_dna <- "ad-"
+} else {
+    print("opt$dna is false")
+    #opt_dna <- FALSE
 }
 }
 
 if (opt$rna == TRUE){
-    opt_rna <- TRUE
+    #opt_rna <- TRUE
     start_normal_rna <- "nr-"
     start_abnormal_rna <- "ar-"
-}
+} #else {
+  #  opt_rna <- FALSE
+#}
 
-if (opt_rna == FALSE & opt_dna == FALSE){
+#if (opt_rna == FALSE & opt_dna == FALSE){
+#  print_help(opt_parser)
+#  stop("must specify at least opt_rna or opt_dna as TRUE", call. = FALSE)
+#}
+if (opt$rna == FALSE & opt$dna == FALSE){
   print_help(opt_parser)
   stop("must specify at least opt_rna or opt_dna as TRUE", call. = FALSE)
 }
-
 #outfile <- opt$outfile
 
 filein <- read.csv(file, header = F)
-if (opt_dna == TRUE){
-outnames_dna <- c()
+
 samplenames <- str_split_fixed(filein$V1, pattern = "\\_", n = 3)[,1]
+if (opt$dna == TRUE){
+outnames_dna <- c()
 for (i in 1:nrow(filein)){
     # read1
     if (grepl(filein$V1[i], pattern = "R1") == TRUE) {
@@ -88,31 +99,47 @@ dna_out <- cbind(filein$V1, outnames_dna)
 colnames(dna_out) <- NULL
 }
 
-if(opt_rna == TRUE) {
+if(opt$rna == TRUE) {
 outnames_rna <- c()
 for (i in 1:nrow(filein)){
     # read1
+    #print("filename...")
+    #print(filein$V1[i])
     if (grepl(filein$V1[i], pattern = "R1") == TRUE) {
         # abnormal read1
         if (filein$V3[i] == "a"){
+            #print("abnormal read 1")
             newname <- paste("ar-", samplenames[i], "_1.fastq.gz", sep = "")
             outnames_rna <- c(outnames_rna, newname)
         # normal read1
         } else if (filein$V3[i] == "n") {
             newname <- paste("nr-", samplenames[i], "_1.fastq.gz", sep = "")
             outnames_rna <- c(outnames_rna, newname)
+        } else {
+            print("something wrong with for loop read 1")
         }
     }
     # read2
     else if (grepl(filein$V1[i], pattern = "R2") == TRUE) {
         # abnormal read2
+        #print("read 2 detected  ")
+        #print("normal or abnormal...")
+        print(filein$V3[i])
           if (filein$V3[i] == "a"){
+            #print("abnormal read 2")
+            #print("samplename...")
+            #print(samplenames[i])
             newname <- paste("ar-", samplenames[i], "_2.fastq.gz", sep = "")
+            #print("newname...")
+            #print(newname)
             outnames_rna <- c(outnames_rna, newname)
         } else if (filein$V3[i] == "n") {
             # normal read2
             newname <- paste("nr-", samplenames[i], "_2.fastq.gz", sep = "")
             outnames_rna <- c(outnames_rna, newname)
+        }
+        else {
+            print("something wrong with for loop read 2")
         }
     } else {
         print("something wrong with for loop")
@@ -158,23 +185,23 @@ colnames(rna_out) <- NULL
 filein_headers <- filein
 colnames(filein_headers) <- c("file_original", "patient", "abnormal_normal")
 
-if (opt_dna == TRUE) {
+if (opt$dna == TRUE) {
 samplesheet_dna <- filein_headers
 samplesheet_dna$file_lens <- outnames_dna
 samplesheet_dna$Sequencing_Method <- dna
 }
 
-if (opt_rna == TRUE) {
+if (opt$rna == TRUE) {
 samplesheet_rna <- filein_headers
 samplesheet_rna$file_lens <- outnames_rna
 samplesheet_rna$Sequencing_Method <- "RNA"
 }
 
-if (opt_rna == TRUE & opt_dna == TRUE){
+if (opt$rna == TRUE & opt$dna == TRUE){
 samplesheet_out <- rbind.data.frame(samplesheet_dna, samplesheet_rna)
-} else if (opt_rna == TRUE & opt_dna == FALSE) {
+} else if (opt$rna == TRUE & opt$dna == FALSE) {
     samplesheet_out <- samplesheet_rna
-} else if (opt_rna == FALSE & opt_dna == TRUE) {
+} else if (opt$rna == FALSE & opt$dna == TRUE) {
     samplesheet_out <- samplesheet_dna
 }
 #write.table(rna_out, file = "rna_out.txt", sep = "\t",
