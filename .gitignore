@@ -23,3 +23,5 @@ fastqs
 nf-predict
 outdir
 *.bam
+samplesheet*
+manifest*
