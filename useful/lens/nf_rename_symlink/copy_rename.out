@@ -1,0 +1,53 @@
+N E X T F L O W  ~  version 23.04.1
+Launching `main.nf` [clever_curran] DSL2 - revision: c566282c27
+[-        ] process > GET_NEW_NAMES     -
+[-        ] process > GENERATE_MANIFEST -
+[-        ] process > RENAME_FILES_RNA  -
+
+[-        ] process > GET_NEW_NAMES     [  0%] 0 of 1
+[-        ] process > GENERATE_MANIFEST -
+[-        ] process > RENAME_FILES_RNA  -
+
+executor >  slurm (1)
+[13/b2ee57] process > GET_NEW_NAMES (1) [  0%] 0 of 1
+[-        ] process > GENERATE_MANIFEST -
+[-        ] process > RENAME_FILES_RNA  -
+
+executor >  slurm (1)
+[13/b2ee57] process > GET_NEW_NAMES (1) [100%] 1 of 1 ✔
+[-        ] process > GENERATE_MANIFEST -
+[-        ] process > RENAME_FILES_RNA  -
+
+executor >  slurm (3)
+[13/b2ee57] process > GET_NEW_NAMES (1)     [100%] 1 of 1 ✔
+[4b/1facf1] process > GENERATE_MANIFEST (1) [  0%] 0 of 1
+[cd/bd3127] process > RENAME_FILES_RNA (1)  [  0%] 0 of 1
+
+executor >  slurm (3)
+[13/b2ee57] process > GET_NEW_NAMES (1)     [100%] 1 of 1 ✔
+[4b/1facf1] process > GENERATE_MANIFEST (1) [100%] 1 of 1 ✔
+[cd/bd3127] process > RENAME_FILES_RNA (1)  [  0%] 0 of 1
+
+executor >  slurm (3)
+[13/b2ee57] process > GET_NEW_NAMES (1)     [100%] 1 of 1 ✔
+[4b/1facf1] process > GENERATE_MANIFEST (1) [100%] 1 of 1 ✔
+[cd/bd3127] process > RENAME_FILES_RNA (1)  [100%] 1 of 1 ✔
+
+executor >  slurm (3)
+[13/b2ee57] process > GET_NEW_NAMES (1)     [100%] 1 of 1 ✔
+[4b/1facf1] process > GENERATE_MANIFEST (1) [100%] 1 of 1 ✔
+[cd/bd3127] process > RENAME_FILES_RNA (1)  [100%] 1 of 1 ✔
+Waiting for file transfers to complete (24 files)
+
+executor >  slurm (3)
+[13/b2ee57] process > GET_NEW_NAMES (1)     [100%] 1 of 1 ✔
+[4b/1facf1] process > GENERATE_MANIFEST (1) [100%] 1 of 1 ✔
+[cd/bd3127] process > RENAME_FILES_RNA (1)  [100%] 1 of 1 ✔
+
+Completed at: 27-Sep-2023 13:37:22
+Duration    : 17m 47s
+CPU hours   : 0.1
+Succeeded   : 3
+
+
+Elapsed time: 0 days 00 hr 17 min 53 sec
