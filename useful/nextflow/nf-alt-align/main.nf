@@ -8,7 +8,7 @@ process bwa_mem_align_alt{
     tuple val(meta), path(fq1), path(fq2)
 
     output:
-    tuple val(meta), path("*.bwamem.sam"): emit: samfile
+    tuple val(meta), path("*.bwamem.sam"), emit: samfile
     path("*.bwamem.sam.header")
     path("*.bwamem.sam.flagstat")
     script:
@@ -27,7 +27,7 @@ process bwa_mem_postalt{
     tuple val(meta), path(samfile)
 
     output:
-    tuple val(meta), path("*_postalt.bam"): emit: bamfile_postalt
+    tuple val(meta), path("*_postalt.bam"), emit: bamfile_postalt
     path("*_postalt.sam.header")
     path("*_postalt.sam.flagstat")
     path("*_postalt.bam.flagstat")
@@ -51,7 +51,7 @@ process samtools_sort{
     tuple val(meta), path(bamfile)
 
     output:
-    tuple val(meta), path("*.sorted.bam"): emit: sortedbam
+    tuple val(meta), path("*.sorted.bam"), emit: sortedbam
 
     script:
     """
@@ -66,7 +66,7 @@ process samtools_index{
     tuple val(meta), path(sortedbam)
 
     output:
-    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"): emit: bam_indexed
+    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam_indexed
 
     script:
     """
@@ -81,7 +81,7 @@ process markduplicates{
     tuple val(meta), path(sortedbam)
 
     output:
-    tuple val(meta), path("*_sorted_mdup.bam"): emit: markdupbam
+    tuple val(meta), path("*_sorted_mdup.bam"), emit: markdupbam
     path("*.sorted.markdup.bam.flagstat")
 
     script:
@@ -138,7 +138,7 @@ process subsetBamtest{
     path alt_chr19_contigs
     path hla_contigs
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"): emit: subsetbam
+    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
 
     script:
     """
@@ -158,7 +158,7 @@ process bam2fastq{
     input:
     tuple val(meta), path(subsetbam)
     output:
-    tuple val(meta), path("*_subset.1.fq"), path("*_subset.2.fq"): emit: subsetfastq
+    tuple val(meta), path("*_subset.1.fq"), path("*_subset.2.fq"), emit: subsetfastq
 
     script:
     """
@@ -180,7 +180,7 @@ process realignwithoutAlt{
     path reference
 
     output:
-    tuple val(meta), path("*_realign.sorted.bam"), path("*_realign.sorted.bam.bai"), path("*_realign.sorted.bam.flagstat"), path("*_realign.sorted.bam.flagstat"): emit: realignbam
+    tuple val(meta), path("*_realign.sorted.bam"), path("*_realign.sorted.bam.bai"), path("*_realign.sorted.bam.flagstat"), path("*_realign.sorted.bam.flagstat"), emit: realignbam
 
     script:
     """
@@ -197,7 +197,7 @@ process reheaderChr{
     tuple val(meta), path(bamfile)
 
     output:
-    tuple val(meta), path("*_reheader.bam"), path("*_reheader.bam.bai"), path("*_reheader.bam.flagstat"), path("*_reheader.bam.flagstat"): emit: reheaderbam
+    tuple val(meta), path("*_reheader.bam"), path("*_reheader.bam.bai"), path("*_reheader.bam.flagstat"), path("*_reheader.bam.flagstat"), emit: reheaderbam
 
     script:
     """
