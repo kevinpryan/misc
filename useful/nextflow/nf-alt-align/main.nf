@@ -104,7 +104,7 @@ process extractContigs {
     script:
     """
     grep 'chr6_' hs38DH.fa.alt | awk -F '\\t' '{print \$1}' > bwakit-alt_chr6_contigs.txt
-    awk -F '\\t' '{print $3}' ${hlatypes} > bwakit-hla_contigs.txt
+    awk -F '\\t' '{print \$3}' ${hlatypes} > bwakit-hla_contigs.txt
     """
 }
 
