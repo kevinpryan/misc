@@ -214,7 +214,10 @@ process reheaderChr{
    // samtools view -H ${meta}_reheader.bam > ${meta}_reheader.bam.header
 
 workflow alt_align_chr6{
-    take: ch_fastq, ch_ref, ch_hlatypes
+    take: 
+    ch_fastq
+    ch_ref
+    ch_hlatypes
 
     main:
     bwa_mem_align_alt(
@@ -246,7 +249,10 @@ workflow alt_align_chr6{
 }
 
 workflow alt_align_chr19{
-    take: ch_fastq, ch_ref, ch_hlatypes
+    take: 
+    ch_fastq
+    ch_ref
+    ch_hlatypes
 
     main:
     bwa_mem_align_alt(
@@ -281,7 +287,8 @@ workflow prepPolysolver{
     /*
     need to realign without alt contigs and remove "chr" from bam header
     */
-    take: subsetbam
+    take: 
+    subsetbam
 
     main:
     bam2fastq(
