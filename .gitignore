@@ -26,3 +26,7 @@ outdir
 samplesheet*
 manifest*
 samplesheet_wes_combined.csv
+bwa-0.7.15
+bwa.kit
+bwakit-0.7.15*
+bwa-0.7.15*
