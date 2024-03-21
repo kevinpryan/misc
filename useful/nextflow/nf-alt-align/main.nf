@@ -116,7 +116,7 @@ process subsetBam{
     path alt_chr6_contigs
     path hla_contigs
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"): emit: subsetbam
+    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
 
     script:
     """
