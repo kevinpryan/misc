@@ -1,7 +1,8 @@
 #!/usr/bin/env nextflow
 
 // stage reference files
-workflow{
+
+/*workflow{
 Channel
     .fromPath(params.reference_dir)
     .ifEmpty { error "No reference files found: $params.reference_dir" }
@@ -27,6 +28,20 @@ Channel
 input_ch.merge(input_ch2).view()
 // .view { it[0] } to view sample names
 }
+*/
+
+workflow {
+    Channel.fromPath("samplesheet_wes_combined.csv")
+    | splitCsv( header:true )
+    | map { row ->
+        meta = id:row.sample
+        [meta, [
+            file(row.fastq_1, checkIfExists: true),
+            file(row.fastq_2, checkIfExists: true)]]
+    }
+    | view
+}
+
 process INDEX {
     publishDir "$params.outdir/idx", mode: 'copy'
 
