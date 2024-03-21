@@ -1,3 +1,0 @@
-Number of CTA/Self genes found in Illumina Exome 2.5: 206
-Percentage of CTA/Self genes found in Illumina Exome 2.5:  96.26168224299066
-CTA/Self genes not found in Illumina Exome 2.5: ['VENTXP1', 'SSX6', 'SSX9', 'CTAGE5', 'FAM46D', 'DSCR8', 'CCDC36', 'ZNF645']
