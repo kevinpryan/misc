@@ -7,20 +7,23 @@ Channel
     .ifEmpty { error "No reference files found: $params.reference_dir" }
     .view()
 Channel
-    .fromFilePairs(params.reads_1, flat: true)
+    .fromFilePairs(params.reads_1)
     .ifEmpty { error "No input files found: $params.reads_1" }
     .set { input_ch }
 
 //input_ch.view()
 
 Channel
-    .fromFilePairs(params.reads_2, flat: true)
+    .fromFilePairs(params.reads_2)
     .ifEmpty { error "No input files found: $params.reads_2" }
     .set { input_ch2 }
 //input_ch2.view()
 // merge the two channels
-input_ch.join(input_ch2, remainder: true)
-    .set { input_ch_merged }
+
+//input_ch.join(input_ch2, remainder: true)
+       //.set { input_ch_merged }
+input_ch.join(input_ch2, by: [0].view())
+
 // .view { it[0] } to view sample names
 }
 process INDEX {
@@ -47,7 +50,9 @@ process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
 
     input:
-    path()
+    path reference
+    tuple val 
 
 }
 */
+
