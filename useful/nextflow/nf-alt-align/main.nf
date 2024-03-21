@@ -201,12 +201,17 @@ process reheaderChr{
 
     script:
     """
-    samtools view -H ${bamfile} | sed '/^@SQ/s/SN\:chr/SN\:/' | samtools reheader - ${bamfile} > ${meta}_reheader.bam
-    samtools index ${meta}_reheader.bam
-    samtools flagstat ${meta}_reheader.bam > ${meta}_reheader.bam.flagstat
-    samtools view -H ${meta}_reheader.bam > ${meta}_reheader.bam.header
+    sed 's/SN:chr/SN:/' <(${samtools.view("-H", bamfile)}) | ${samtools.reheader("-", bamfile)} > ${meta}_reheader.bam
+    ${samtools.index(meta + "_reheader.bam")}
+    ${samtools.flagstat(meta + "_reheader.bam")} > ${meta}_reheader.bam.flagstat
+    ${samtools.view("-H", meta + "_reheader.bam")} > ${meta}_reheader.bam.header
     """
 }
+
+    //samtools view -H ${bamfile} | sed '/^@SQ/s/SN\:chr/SN\:/' | samtools reheader - ${bamfile} > ${meta}_reheader.bam
+    //samtools index ${meta}_reheader.bam
+   // samtools flagstat ${meta}_reheader.bam > ${meta}_reheader.bam.flagstat
+   // samtools view -H ${meta}_reheader.bam > ${meta}_reheader.bam.header
 
 workflow alt_align_chr6{
     take: ch_fastq, ch_ref, ch_hlatypes
