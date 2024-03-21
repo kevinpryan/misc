@@ -5,7 +5,7 @@ workflow{
 Channel
     .fromPath(params.reference_dir)
     .ifEmpty { error "No reference files found: $params.reference_dir" }
-    .view()
+    //.view()
 Channel
     .fromFilePairs(params.reads_1)
     .ifEmpty { error "No input files found: $params.reads_1" }
@@ -22,8 +22,9 @@ Channel
 
 //input_ch.join(input_ch2, remainder: true)
        //.set { input_ch_merged }
-input_ch.join(input_ch2, by: [0].view())
-
+//input_ch.join(input_ch2, by: [0,1]).view()
+//input_ch2.view()
+input_ch.merge(input_ch2).view()
 // .view { it[0] } to view sample names
 }
 process INDEX {

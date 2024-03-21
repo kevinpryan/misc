@@ -25,3 +25,4 @@ outdir
 *.bam
 samplesheet*
 manifest*
+samplesheet_wes_combined.csv
