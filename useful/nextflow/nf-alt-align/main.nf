@@ -5,7 +5,8 @@ process bwa_mem_align_alt{
 
     input:
     path reference
-    tuple val(meta), path(fq1), path(fq2)
+    tuple val(meta), path(reads)
+    val reference_basename
 
     output:
     tuple val(meta), path("*.bwamem.sam"), emit: samfile
@@ -13,9 +14,9 @@ process bwa_mem_align_alt{
     path("*.bwamem.sam.flagstat")
     script:
     """
-    bwa mem -t ${task.cpus} ${reference} ${fq1} ${fq2} > "${meta}.bwamem.sam"
-    samtools view -H ${meta}.bwamem.sam > ${meta}.bwamem.sam.header
-    samtools flagstat ${meta}.bwamem.sam > ${meta}.bwamem.sam.flagstat
+    bwa mem -t ${task.cpus} ${reference_basename}.fa ${reads} > "${meta.sample}.bwamem.sam"
+    samtools view -H ${meta.sample}.bwamem.sam > ${meta.sample}.bwamem.sam.header
+    samtools flagstat ${meta.sample}.bwamem.sam > ${meta.sample}.bwamem.sam.flagstat
     """
 }
 
@@ -25,7 +26,7 @@ process bwa_mem_postalt{
     input:
     path reference
     tuple val(meta), path(samfile)
-
+    val reference_basename
     output:
     tuple val(meta), path("*_postalt.bam"), emit: bamfile_postalt
     path("*_postalt.sam.header")
@@ -34,13 +35,13 @@ process bwa_mem_postalt{
 
     script:
     """
-    k8-linux bwa-postalt.js \
-    hs38DH.fa.alt \
-    ${meta}.bwamem.sam > ${meta}_postalt.sam
-    samtools view -H ${meta}_postalt.sam > ${meta}_postalt.sam.header
-    samtools flagstat ${meta}_postalt.sam > ${meta}_postalt.sam.flagstat
-    samtools view -bh -o ${meta}_postalt.bam ${meta}_postalt.sam
-    samtools flagstat ${meta}_postalt.bam > ${meta}_postalt.bam.flagstat
+    k8-linux /usr/local/bin/bwa-0.7.15/bwa-postalt.js \
+    ${reference_basename}.fa.alt \
+    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam
+    samtools view -H ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.header
+    samtools flagstat ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.flagstat
+    samtools view -bh -o ${meta.sample}_postalt.bam ${meta.sample}_postalt.sam
+    samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
     """
 }
 
@@ -55,7 +56,7 @@ process samtools_sort{
 
     script:
     """
-    samtools sort -o ${meta}.sorted.bam ${bamfile}
+    samtools sort -o ${meta.sample}.sorted.bam ${bamfile}
     """
 }
 
@@ -66,7 +67,7 @@ process samtools_index{
     tuple val(meta), path(sortedbam)
 
     output:
-    tuple val(meta), path("*.sorted.bam"), path("*.sorted.bam.bai"), emit: bam_indexed
+    tuple val(meta), path("*.sorted.bam.bai"), emit: bam_indexed
 
     script:
     """
@@ -78,16 +79,16 @@ process markduplicates{
     publishDir "$params.outdir/markduplicates"
 
     input:
-    tuple val(meta), path(sortedbam)
+    tuple val(meta), path(sortedbam), path(sortedbam_index)
 
     output:
-    tuple val(meta), path("*_sorted_mdup.bam"), emit: markdupbam
-    path("*.sorted.markdup.bam.flagstat")
+    tuple val(meta), path("*_sorted_mdup.bam"), path("*_sorted_mdup.bam.bai"), emit: markdupbam
+    path("*.sorted.mdup.bam.flagstat")
 
     script:
     """
-    bammarkduplicates I=${sortedbam} O=${meta}_sorted_mdup.bam" index=1 rmdup=0
-    samtools flagstat ${meta}_sorted_mdup.bam > ${meta}_sorted_mdup.bam.flagstat
+    bammarkduplicates I=${sortedbam} O=${meta.sample}_sorted_mdup.bam index=1 rmdup=0
+    samtools flagstat ${meta.sample}_sorted_mdup.bam > ${meta.sample}.sorted.mdup.bam.flagstat
     """
 }
 
@@ -97,16 +98,34 @@ process extractContigs {
     input:
     path hlatypes
     path reference
+    val reference_basename
     output:
     path("bwakit-alt_chr6_contigs.txt"), emit: alt_chr6_contigs
-    path("bwakit-alt-chr19_contigs.txt"), emit: alt_chr19_contigs
     path("bwakit-hla_contigs.txt"), emit: hla_contigs
     script:
     """
-    grep 'chr6_' hs38DH.fa.alt | awk -F '\\t' '{print \$1}' > bwakit-alt_chr6_contigs.txt
+    grep 'chr6_' ${reference_basename}.fa.alt | awk -F '\\t' '{print \$1}' > bwakit-alt_chr6_contigs.txt
     awk -F '\\t' '{print \$3}' ${hlatypes} > bwakit-hla_contigs.txt
     """
 }
+
+process extractContigsTest {
+    publishDir "$params.outdir/extractContigs"
+
+    input:
+    path hlatypes
+    path reference
+    val reference_basename
+    output:
+    path("bwakit-alt_chr19_contigs.txt"), emit: alt_chr19_contigs
+    path("bwakit-hla_contigs.txt"), emit: hla_contigs
+    script:
+    """
+    grep 'chr19_' ${reference_basename}.fa.alt | awk -F '\\t' '{print \$1}' > bwakit-alt_chr19_contigs.txt
+    awk -F '\\t' '{print \$3}' ${hlatypes} > bwakit-hla_contigs.txt
+    """
+}
+
 
 process subsetBam{
     publishDir "$params.outdir/subsetBam"
@@ -120,13 +139,11 @@ process subsetBam{
 
     script:
     """
-    primary_contig='chr6:28509970-33480727'
-    no_contig='*'
-    samtools view -o ${meta}_subset.bam -b ${bamfile} $primary_contig ${alt_chr6_contigs} ${hla_contigs} "$no_contig" 
-    samtools sort -o ${meta}_subset.sorted.bam ${meta}_subset.bam
-    sambamba index ${meta}_subset.sorted.bam
-    samtools view -H ${meta}_subset.sorted.bam > ${meta}_subset.sorted.bam.header
-    samtools flagstat ${meta}_subset.sorted.bam > ${meta}_subset.sorted.bam.flagstat
+    samtools view -o ${meta.sample}_subset.bam -b ${bamfile} 'chr6:28509970-33480727' ${alt_chr6_contigs} ${hla_contigs} '*'
+    samtools sort -o ${meta.sample}_subset.sorted.bam ${meta.sample}_subset.bam
+    sambamba index ${meta.sample}_subset.sorted.bam
+    samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
+    samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
     """
 }
 
@@ -134,23 +151,25 @@ process subsetBamtest{
     publishDir "$params.outdir/subsetBam"
 
     input:
-    tuple val(meta), path(bamfile)
+    tuple val(meta), path(bamfile), path(bamfileIndex)
     path alt_chr19_contigs
     path hla_contigs
+    path reference
     output:
     tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
 
     script:
     """
-    primary_contig='chr6:28509970-33480727'
-    no_contig='*'
-    samtools view -o ${meta}_subset.bam -b ${bamfile} $primary_contig ${alt_chr19_contigs} ${hla_contigs} "$no_contig" 
-    samtools sort -o ${meta}_subset.sorted.bam ${meta}_subset.bam
-    sambamba index ${meta}_subset.sorted.bam
-    samtools view -H ${meta}_subset.sorted.bam > ${meta}_subset.sorted.bam.header
-    samtools flagstat ${meta}_subset.sorted.bam > ${meta}_subset.sorted.bam.flagstat
+   awk 'BEGIN {FS="\\t"}; {print \$1 FS "0" FS \$2}' chr19_chr19_KI270866v1_alt.fa.fai > chr19_chr19_KI270866v1_alt.fa.bed 
+    samtools view -o ${meta.sample}_subset.bam -M -b ${bamfile} '*' -L chr19_chr19_KI270866v1_alt.fa.bed 
+    samtools sort -o ${meta.sample}_subset.sorted.bam ${meta.sample}_subset.bam
+    sambamba index ${meta.sample}_subset.sorted.bam
+    samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
+    samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
     """
 }
+
+//     samtools view -o ${meta.sample}_subset.bam -b ${bamfile} 'chr6:28509970-33480727' ${alt_chr19_contigs} ${hla_contigs} '*'
 
 process bam2fastq{
     publishDir "$params.outdir/bam2fastq"
@@ -166,8 +185,8 @@ process bam2fastq{
     -f "bam" -h -p -l 0 -t ${task.cpus} \
     "$IN" | sambamba sort -p -n -t ${task.cpus} -o - /dev/stdin |
     samtools fastq -@ 32 /dev/stdin \
-    -1 "${meta}_subset.1.fq" \
-    -2 "${meta}_subset.2.fq" \
+    -1 "${meta.sample}_subset.1.fq" \
+    -2 "${meta.sample}_subset.2.fq" \
     -0 /dev/null -s /dev/null -n
     """
 }
@@ -184,9 +203,9 @@ process realignwithoutAlt{
 
     script:
     """
-    bwa mem -t ${task.cpus} -j ${reference} ${fq1} ${fq2} > ${meta}_realign.sam
-    samtools view -H ${meta}_realign.sam > ${meta}_realign.sam.header
-    samtools flagstat ${meta}_realign.sam > ${meta}_realign.sam.flagstat
+    bwa mem -t ${task.cpus} -j ${reference} ${fq1} ${fq2} > ${meta.sample}_realign.sam
+    samtools view -H ${meta.sample}_realign.sam > ${meta.sample}_realign.sam.header
+    samtools flagstat ${meta.sample}_realign.sam > ${meta.sample}_realign.sam.flagstat
     """
 }
 
@@ -201,10 +220,11 @@ process reheaderChr{
 
     script:
     """
-    sed 's/SN:chr/SN:/' <(${samtools.view("-H", bamfile)}) | ${samtools.reheader("-", bamfile)} > ${meta}_reheader.bam
-    ${samtools.index(meta + "_reheader.bam")}
-    ${samtools.flagstat(meta + "_reheader.bam")} > ${meta}_reheader.bam.flagstat
-    ${samtools.view("-H", meta + "_reheader.bam")} > ${meta}_reheader.bam.header
+    samplename=\${meta.sample}
+    sed 's/SN:chr/SN:/' <(${samtools.view("-H", bamfile)}) | ${samtools.reheader("-", bamfile)} > ${meta.sample}_reheader.bam
+    ${samtools.index(samplename + "_reheader.bam")}
+    ${samtools.flagstat(samplename + "_reheader.bam")} > ${meta.sample}_reheader.bam.flagstat
+    ${samtools.view("-H", samplename + "_reheader.bam")} > ${meta.sample}_reheader.bam.header
     """
 }
 
@@ -218,15 +238,17 @@ workflow alt_align_chr6{
     ch_fastq
     ch_ref
     ch_hlatypes
-
+    reference_basename
     main:
     bwa_mem_align_alt(
         ch_ref,
-        ch_fastq
+        ch_fastq,
+        reference_basename
     )
     bwa_mem_postalt(
         ch_ref,
-        bwa_mem_align_alt.out.samfile
+        bwa_mem_align_alt.out.samfile,
+        reference_basename
     )
     samtools_sort(
         bwa_mem_postalt.out.bamfile_postalt
@@ -234,12 +256,14 @@ workflow alt_align_chr6{
     samtools_index(
         samtools_sort.out.sortedbam
     )
+    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
     markduplicates(
-        samtools_index.out.bam_indexed
+        samtools_sorted_index
     )
     extractContigs(
         ch_hlatypes,
-        ch_ref
+        ch_ref,
+        reference_basename
     )
     subsetBam(
         markduplicates.out.markdupbam,
@@ -253,15 +277,18 @@ workflow alt_align_chr19{
     ch_fastq
     ch_ref
     ch_hlatypes
+    reference_basename
 
     main:
     bwa_mem_align_alt(
         ch_ref,
-        ch_fastq
+        ch_fastq,
+        reference_basename
     )
     bwa_mem_postalt(
         ch_ref,
-        bwa_mem_align_alt.out.samfile
+        bwa_mem_align_alt.out.samfile,
+        reference_basename
     )
     samtools_sort(
         bwa_mem_postalt.out.bamfile_postalt
@@ -269,17 +296,20 @@ workflow alt_align_chr19{
     samtools_index(
         samtools_sort.out.sortedbam
     )
+    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
     markduplicates(
-        samtools_index.out.bam_indexed
+        samtools_sorted_index
     )
-    extractContigs(
+    extractContigsTest(
         ch_hlatypes,
-        ch_ref
+        ch_ref,
+        reference_basename
     )
     subsetBamtest(
         markduplicates.out.markdupbam,
-        extractContigs.out.alt_chr6_contigs,
-        extractContigs.out.hla_contigs
+        extractContigsTest.out.alt_chr19_contigs,
+        extractContigsTest.out.hla_contigs,
+        ch_ref
     )
 }
 
@@ -311,25 +341,31 @@ workflow prepPolysolver{
 
 
 workflow {
-    Channel.fromPath(params.samplesheet)
+    Channel.fromPath(params.samplesheet, checkIfExists: true)
     | splitCsv( header:true )
     | map { row ->
-        meta = [id:row.sample]
+        meta = row.subMap('sample')
         [meta, [
             file(row.fastq_1, checkIfExists: true),
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
-    Channel
-    .fromPath(params.reference_dir)
-    //.ifEmpty { error "No reference files found: $params.reference_dir" }
-    .set { ch_ref }
-    .view()
-    Channel
-    .fromPath(params.hlatypes)
-    //.ifEmpty { error "No hla types found: $params.hlatypes" }
-    .set { ch_hlatypes }
-    .view()
-    //alt_align_chr19(ch_fastq, ch_ref)
-
+    ch_fastq.view()
+    reference_basename = Channel.of(params.reference_basename)
+    //Channel
+    //.fromPath(params.reference_dir, checkIfExists: true)
+    //.set { ch_ref }
+    ch_ref = Channel.fromPath(params.reference_dir, checkIfExists: true).collect()
+    ch_ref.view()
+    //Channel
+    //.fromPath(params.hlatypes, checkIfExists: true)
+    //.set { ch_hlatypes }
+    ///.view()
+    ch_hlatypes = Channel.fromPath(params.hlatypes, checkIfExists: true)
+    alt_align_chr19(  
+    ch_fastq,
+    ch_ref,
+    ch_hlatypes,
+    reference_basename
+    )
 }
