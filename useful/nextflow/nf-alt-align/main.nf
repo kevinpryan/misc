@@ -322,12 +322,14 @@ workflow {
     | set { ch_fastq }
     Channel
     .fromPath(params.reference_dir)
-    .ifEmpty { error "No reference files found: $params.reference_dir" }
+    //.ifEmpty { error "No reference files found: $params.reference_dir" }
     .set { ch_ref }
+    .view()
     Channel
     .fromPath(params.hlatypes)
-    .ifEmpty { error "No hla types found: $params.hlatypes" }
+    //.ifEmpty { error "No hla types found: $params.hlatypes" }
     .set { ch_hlatypes }
-    alt_align_chr19(ch_fastq, ch_ref)
+    .view()
+    //alt_align_chr19(ch_fastq, ch_ref)
 
 }
