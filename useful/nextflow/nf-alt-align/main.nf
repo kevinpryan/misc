@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 // stage reference files
-
+workflow{
 Channel
     .fromPath(params.reference_dir)
     .ifEmpty { error "No reference files found: $params.reference_dir" }
@@ -22,7 +22,7 @@ Channel
 input_ch.join(input_ch2, remainder: true)
     .set { input_ch_merged }
 // .view { it[0] } to view sample names
-
+}
 process INDEX {
     publishDir "$params.outdir/idx", mode: 'copy'
 
@@ -42,7 +42,7 @@ process INDEX {
 ///samtools view -H ${outdir_sample}/bwamem/${base}.bwamem.sam > ${outdir_sample}/bwamem/${base}.bwamem.sam.header
 //samtools flagstat ${outdir_sample}/bwamem/${base}.bwamem.sam > ${outdir_sample}/bwamem/${base}.bwamem.sam.flagstat
 
-
+/*
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
 
@@ -50,3 +50,4 @@ process bwa_mem_align_alt{
     path()
 
 }
+*/
