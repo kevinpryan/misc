@@ -1,7 +1,11 @@
 #!/usr/bin/env nextflow
-params.reads_1 = '/data2/caf_wes_bc/raw_data/*{R1,R2}*.fastq.gz'
-params.reads_2 = '/data2/caf_wes_bc/raw_data_final_samples/*{R1,R2}*.fastq.gz'
 
+// stage reference files
+
+Channel
+    .fromPath(params.reference_dir)
+    .ifEmpty { error "No reference files found: $params.reference_dir" }
+    .view()
 Channel
     .fromFilePairs(params.reads_1, flat: true)
     .ifEmpty { error "No input files found: $params.reads_1" }
@@ -15,10 +19,9 @@ Channel
     .set { input_ch2 }
 //input_ch2.view()
 // merge the two channels
-input_ch.join(input_ch2, remainder: true).view { it[0] }
-    //.set { input_ch_merged }
-
-//input_ch_merged.view() 
+input_ch.join(input_ch2, remainder: true)
+    .set { input_ch_merged }
+// .view { it[0] } to view sample names
 
 process INDEX {
     publishDir "$params.outdir/idx", mode: 'copy'
@@ -34,6 +37,11 @@ process INDEX {
     samtools index ${bamfile}
     """
 }
+
+//bwa mem -t 15 "${reference}" "${indir}/${fq1}" "${indir}/${fq2}" > "${outdir_sample}/bwamem/${base}.bwamem.sam"
+///samtools view -H ${outdir_sample}/bwamem/${base}.bwamem.sam > ${outdir_sample}/bwamem/${base}.bwamem.sam.header
+//samtools flagstat ${outdir_sample}/bwamem/${base}.bwamem.sam > ${outdir_sample}/bwamem/${base}.bwamem.sam.flagstat
+
 
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
