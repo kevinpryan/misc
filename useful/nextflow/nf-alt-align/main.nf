@@ -1,5 +1,22 @@
 #!/usr/bin/env nextflow
 
+process fasta_index_bed{
+    publishDir "$params.outdir/fasta_bed"
+
+    input:
+    path reference
+    val chromosome
+    val reference_basename
+    output:
+    path("*.bed"), emit: fasta_bed
+
+    script:
+    """
+    samtools faidx ${reference_basename}.fa
+    awk 'BEGIN {FS="\\t"}; {print \$1 FS "0" FS \$2}' ${reference_basename}.fa.fai > ${reference_basename}.full.fa.bed
+    grep ${chromosome} ${reference_basename}.full.fa.bed > ${reference_basename}.fa.bed
+    """
+}
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
 
@@ -134,12 +151,17 @@ process subsetBam{
     tuple val(meta), path(bamfile)
     path alt_chr6_contigs
     path hla_contigs
+    path fasta_bed
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
-
+    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
+    path("*_subset.sorted.bam.flagstat")
+    path("*_subset.sorted.bam.flagstat") 
     script:
     """
-    samtools view -o ${meta.sample}_subset.bam -b ${bamfile} 'chr6:28509970-33480727' ${alt_chr6_contigs} ${hla_contigs} '*'
+    samtools view -o ${meta.sample}_subset1.bam -b ${bamfile} -L ${fasta_bed}
+    samtools view -o ${meta.sample}_subset2.bam -b ${bamfile} "*"
+    samtools view -o ${meta.sample}_subset3.bam -b ${bamfile} 'chr6:28509970-33480727'
+    samtools merge ${meta.sample}_subset.bam ${meta.sample}_subset1.bam ${meta.sample}_subset2.bam ${meta.sample}_subset3.bam
     samtools sort -o ${meta.sample}_subset.sorted.bam ${meta.sample}_subset.bam
     sambamba index ${meta.sample}_subset.sorted.bam
     samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
@@ -155,19 +177,27 @@ process subsetBamtest{
     path alt_chr19_contigs
     path hla_contigs
     path reference
+    path fasta_bed
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
+    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), emit: subsetbam
+    path("*_subset.sorted.bam.flagstat")
+    path("*_subset.sorted.bam.header")
 
     script:
     """
-   awk 'BEGIN {FS="\\t"}; {print \$1 FS "0" FS \$2}' chr19_chr19_KI270866v1_alt.fa.fai > chr19_chr19_KI270866v1_alt.fa.bed 
-    samtools view -o ${meta.sample}_subset.bam -M -b ${bamfile} '*' -L chr19_chr19_KI270866v1_alt.fa.bed 
+    samtools view -o ${meta.sample}_subset1.bam -b ${bamfile} -L ${fasta_bed}
+    samtools view -o ${meta.sample}_subset2.bam -b ${bamfile} "*"
+    samtools view -o ${meta.sample}_subset3.bam -b ${bamfile} 'chr6:28509970-33480727'
+    samtools merge ${meta.sample}_subset.bam ${meta.sample}_subset1.bam ${meta.sample}_subset2.bam ${meta.sample}_subset3.bam
     samtools sort -o ${meta.sample}_subset.sorted.bam ${meta.sample}_subset.bam
     sambamba index ${meta.sample}_subset.sorted.bam
     samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
     samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
     """
 }
+//     samtools view -o ${meta.sample}_subset.bam -M -b ${bamfile} '*' -L chr19_chr19_KI270866v1_alt.fa.bed
+
+//    awk 'BEGIN {FS="\\t"}; {print \$1 FS "0" FS \$2}' chr19_chr19_KI270866v1_alt.fa.fai > chr19_chr19_KI270866v1_alt.fa.bed
 
 //     samtools view -o ${meta.sample}_subset.bam -b ${bamfile} 'chr6:28509970-33480727' ${alt_chr19_contigs} ${hla_contigs} '*'
 
@@ -175,16 +205,16 @@ process bam2fastq{
     publishDir "$params.outdir/bam2fastq"
 
     input:
-    tuple val(meta), path(subsetbam)
+    tuple val(meta), path(subsetbam), path(subsetbam_bai)
     output:
-    tuple val(meta), path("*_subset.1.fq"), path("*_subset.2.fq"), emit: subsetfastq
+    tuple val(meta), path("*.fq"), emit: subsetfastq
 
     script:
     """
     sambamba view \
     -f "bam" -h -p -l 0 -t ${task.cpus} \
-    "$IN" | sambamba sort -p -n -t ${task.cpus} -o - /dev/stdin |
-    samtools fastq -@ 32 /dev/stdin \
+    ${subsetbam} | sambamba sort -p -n -t ${task.cpus} -o - /dev/stdin |
+    samtools fastq /dev/stdin \
     -1 "${meta.sample}_subset.1.fq" \
     -2 "${meta.sample}_subset.2.fq" \
     -0 /dev/null -s /dev/null -n
@@ -195,15 +225,18 @@ process realignwithoutAlt{
     publishDir "$params.outdir/realignwithoutAlt"
     
     input:
-    tuple val(meta), path(fq1), path(fq2)
+    tuple val(meta), path(reads)
     path reference
+    val reference_basename
 
     output:
-    tuple val(meta), path("*_realign.sorted.bam"), path("*_realign.sorted.bam.bai"), path("*_realign.sorted.bam.flagstat"), path("*_realign.sorted.bam.flagstat"), emit: realignbam
+    tuple val(meta), path("*_realign.sam"), emit: realignbam
+    path("*_realign.sam.header")
+    path("*_realign.sam.flagstat")
 
     script:
     """
-    bwa mem -t ${task.cpus} -j ${reference} ${fq1} ${fq2} > ${meta.sample}_realign.sam
+    bwa mem -t ${task.cpus} -j ${reference_basename}.fa ${reads} > ${meta.sample}_realign.sam
     samtools view -H ${meta.sample}_realign.sam > ${meta.sample}_realign.sam.header
     samtools flagstat ${meta.sample}_realign.sam > ${meta.sample}_realign.sam.flagstat
     """
@@ -213,18 +246,18 @@ process reheaderChr{
     publishDir "$params.outdir/reheaderChr"
 
     input:
-    tuple val(meta), path(bamfile)
+    tuple val(meta), path(bamfile), path(bamfile_idx)
 
     output:
-    tuple val(meta), path("*_reheader.bam"), path("*_reheader.bam.bai"), path("*_reheader.bam.flagstat"), path("*_reheader.bam.flagstat"), emit: reheaderbam
-
+    //tuple val(meta), path("*_reheader.bam"), path("*_reheader.bam.bai"), path("*_reheader.bam.flagstat"), path("*_reheader.bam.header"), emit: reheaderbam
+    tuple val(meta), path("*_reheader.bam"), path("*_reheader.bam.bai"), emit: reheaderbam
+    path("*_reheader.bam.flagstat")
+    path("*_reheader.bam.header")
     script:
     """
-    samplename=\${meta.sample}
-    sed 's/SN:chr/SN:/' <(${samtools.view("-H", bamfile)}) | ${samtools.reheader("-", bamfile)} > ${meta.sample}_reheader.bam
-    ${samtools.index(samplename + "_reheader.bam")}
-    ${samtools.flagstat(samplename + "_reheader.bam")} > ${meta.sample}_reheader.bam.flagstat
-    ${samtools.view("-H", samplename + "_reheader.bam")} > ${meta.sample}_reheader.bam.header
+    bash reheader_chr.sh ${bamfile} ${meta.sample}_reheader.bam
+    samtools flagstat ${meta.sample}_reheader.bam > ${meta.sample}_reheader.bam.flagstat
+    samtools view -H ${meta.sample}_reheader.bam > ${meta.sample}_reheader.bam.header
     """
 }
 
@@ -265,10 +298,17 @@ workflow alt_align_chr6{
         ch_ref,
         reference_basename
     )
+    fasta_index_bed(
+        ch_ref,
+        "chr6",
+        reference_basename
+    )
     subsetBam(
         markduplicates.out.markdupbam,
         extractContigs.out.alt_chr6_contigs,
-        extractContigs.out.hla_contigs
+        extractContigs.out.hla_contigs,
+        ch_ref,
+        fasta_index_bed.out.fasta_bed
     )
 }
 
@@ -305,12 +345,20 @@ workflow alt_align_chr19{
         ch_ref,
         reference_basename
     )
+    fasta_index_bed(
+        ch_ref,
+        "chr19",
+        reference_basename
+    )
     subsetBamtest(
         markduplicates.out.markdupbam,
         extractContigsTest.out.alt_chr19_contigs,
         extractContigsTest.out.hla_contigs,
-        ch_ref
+        ch_ref,
+        fasta_index_bed.out.fasta_bed
     )
+    emit:
+    subsetBamtest.out.subsetbam
 }
 
 workflow prepPolysolver{
@@ -319,6 +367,8 @@ workflow prepPolysolver{
     */
     take: 
     subsetbam
+    reference
+    reference_basename
 
     main:
     bam2fastq(
@@ -326,16 +376,18 @@ workflow prepPolysolver{
     )
     realignwithoutAlt(
         bam2fastq.out.subsetfastq,
-        reference
+        reference,
+        reference_basename
         ) 
     samtools_sort(
-        relalignwithoutAlt.out.realignbam
+        realignwithoutAlt.out.realignbam
         )
     samtools_index(
         samtools_sort.out.sortedbam
     )
+    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
     reheaderChr(
-        samtools_index.out.bam_indexed
+        samtools_sorted_index
     )
 }
 
@@ -356,7 +408,7 @@ workflow {
     //.fromPath(params.reference_dir, checkIfExists: true)
     //.set { ch_ref }
     ch_ref = Channel.fromPath(params.reference_dir, checkIfExists: true).collect()
-    ch_ref.view()
+    //ch_ref.view()
     //Channel
     //.fromPath(params.hlatypes, checkIfExists: true)
     //.set { ch_hlatypes }
@@ -366,6 +418,12 @@ workflow {
     ch_fastq,
     ch_ref,
     ch_hlatypes,
+    reference_basename
+    )
+    alt_align_chr19.out.collect().view()
+    prepPolysolver(
+    alt_align_chr19.out.collect(),
+    ch_ref,
     reference_basename
     )
 }
