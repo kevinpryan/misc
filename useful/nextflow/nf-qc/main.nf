@@ -35,12 +35,12 @@ process strandedness{
     input:
     tuple val(meta), path(reads)
     path gtf
+    path fasta
     output:
-    path "*", emit: strandedness
+    path "*_strandedness.txt", emit: strandedness
     script:
     """
-    check_strandedness -g ${gtf} -fa /data/kryan/reference/gencode.v40.transcripts.fa -r1 $read1 -r2 $read2 -k /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001005744/kallisto_index > ${sample}_strandedness.txt
-    strandedness ${reads}
+    check_strandedness -g ${gtf} -fa ${fasta} -r1 ${reads}*1.fq.gz -r2 ${reads}*2.fq.gz > ${meta.sample}_strandedness.txt
     """
 
 workflow {
@@ -53,7 +53,11 @@ workflow {
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
-        ch_ref = file(params.reference_dir, checkIfExists: true)
+    ch_gtf = file(params.gtf, checkIfExists: true)
+    ch_fasta = file(params.fasta, checkIfExists: true)
+    strandedness(ch_fastq, 
+                ch_gtf,
+                ch_fasta)
     fastqc(ch_fastq)
     multiqc(fastqc.out.fastqc_zips_path.collect())
 }
