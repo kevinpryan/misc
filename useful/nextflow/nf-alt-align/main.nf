@@ -148,12 +148,13 @@ process subsetBam{
     publishDir "$params.outdir/subsetBam"
 
     input:
-    tuple val(meta), path(bamfile)
+    tuple val(meta), path(bamfile), path(bamfileIndex)
     path alt_chr6_contigs
     path hla_contigs
+    path reference
     path fasta_bed
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), path("*_subset.sorted.bam.flagstat"), emit: subsetbam
+    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), emit: subsetbam
     path("*_subset.sorted.bam.flagstat")
     path("*_subset.sorted.bam.flagstat") 
     script:
@@ -310,6 +311,7 @@ workflow alt_align_chr6{
         ch_ref,
         fasta_index_bed.out.fasta_bed
     )
+    emit: subsetBam.out.subsetbam
 }
 
 workflow alt_align_chr19{
@@ -391,6 +393,43 @@ workflow prepPolysolver{
     )
 }
 
+/*
+workflow {
+    Channel.fromPath(params.samplesheet, checkIfExists: true)
+    | splitCsv( header:true )
+    | map { row ->
+        meta = row.subMap('sample')
+        [meta, [
+            file(row.fastq_1, checkIfExists: true),
+            file(row.fastq_2, checkIfExists: true)]]
+    }
+    | set { ch_fastq }
+    //ch_fastq.view()
+    reference_basename = Channel.value(params.reference_basename)
+    //Channel
+    //.fromPath(params.reference_dir, checkIfExists: true)
+    //.set { ch_ref }
+    ch_ref = file(params.reference_dir, checkIfExists: true)
+    //ch_ref.view()
+    //Channel
+    //.fromPath(params.hlatypes, checkIfExists: true)
+    //.set { ch_hlatypes }
+    ///.view()
+    ch_hlatypes = file(params.hlatypes, checkIfExists: true)
+    alt_align_chr19(  
+    ch_fastq,
+    ch_ref,
+    ch_hlatypes,
+    reference_basename
+    )
+    //alt_align_chr19.out.collect().view()
+    prepPolysolver(
+    alt_align_chr19.out.collect(),
+    ch_ref,
+    reference_basename
+    )
+}
+*/
 
 workflow {
     Channel.fromPath(params.samplesheet, checkIfExists: true)
@@ -402,28 +441,29 @@ workflow {
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
-    ch_fastq.view()
-    reference_basename = Channel.of(params.reference_basename)
+    //ch_fastq.view()
+    reference_basename = Channel.value(params.reference_basename)
     //Channel
     //.fromPath(params.reference_dir, checkIfExists: true)
     //.set { ch_ref }
-    ch_ref = Channel.fromPath(params.reference_dir, checkIfExists: true).collect()
+    ch_ref = file(params.reference_dir, checkIfExists: true)
     //ch_ref.view()
     //Channel
     //.fromPath(params.hlatypes, checkIfExists: true)
     //.set { ch_hlatypes }
     ///.view()
-    ch_hlatypes = Channel.fromPath(params.hlatypes, checkIfExists: true)
-    alt_align_chr19(  
+    ch_hlatypes = file(params.hlatypes, checkIfExists: true)
+    alt_align_chr6(
     ch_fastq,
     ch_ref,
     ch_hlatypes,
     reference_basename
     )
-    alt_align_chr19.out.collect().view()
+    //alt_align_chr19.out.collect().view()
     prepPolysolver(
-    alt_align_chr19.out.collect(),
+    alt_align_chr6.out.collect(),
     ch_ref,
     reference_basename
     )
 }
+
