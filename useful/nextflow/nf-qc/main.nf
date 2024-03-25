@@ -29,6 +29,20 @@ process multiqc{
     multiqc .
     """
 }
+
+process strandedness{
+    publishDir "${params.outdir}/${meta.sample}/strandedness"
+    input:
+    tuple val(meta), path(reads)
+    path gtf
+    output:
+    path "*", emit: strandedness
+    script:
+    """
+    check_strandedness -g ${gtf} -fa /data/kryan/reference/gencode.v40.transcripts.fa -r1 $read1 -r2 $read2 -k /data/kryan/rna_seq_bc/caf_subtypes/EGAD00001005744/kallisto_index > ${sample}_strandedness.txt
+    strandedness ${reads}
+    """
+
 workflow {
     Channel.fromPath(params.samplesheet, checkIfExists: true)
     | splitCsv( header:true )
@@ -40,6 +54,7 @@ workflow {
     }
     | set { ch_fastq }
     ch_fastq.view()
+        ch_ref = file(params.reference_dir, checkIfExists: true)
     //fastqc(ch_fastq)
     //multiqc(fastqc.fastqc_reports.collect())
 }
