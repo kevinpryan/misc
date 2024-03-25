@@ -8,8 +8,8 @@ process fastqc{
   output:
   tuple val(meta), path("*"), emit: fastqc_reports
   tuple val(meta), path("*zip"), emit: fastqc_zips
-  tuple val(meta) path("*html"), emit: fastqc_htmls
-
+  tuple val(meta), path("*html"), emit: fastqc_htmls
+  path("*zip"), emit: fastqc_zips_path
   script:
   """
   fastqc ${reads} -t ${task.cpus}
@@ -39,7 +39,8 @@ workflow {
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
-    ch_fastq.view()
-    //fastqc(ch_fastq)
-    //multiqc(fastqc.fastqc_reports.collect())
+    //ch_fastq.view()
+    fastqc(ch_fastq)
+    //multiqc(fastqc.out.fastqc_reports.collect())
+    multiqc(fastqc.out.fastqc_zips_path.collect())
 }
