@@ -62,6 +62,28 @@ process bwa_mem_postalt{
     """
 }
 
+process bwa_mem_align_alt_postalt{
+    publishDir "$params.outdir/bwa-aln-postalt"
+    input:
+    path reference
+    tuple val(meta), path(reads)
+    val reference_basename
+    output:
+    tuple val(meta), path("*_postalt.bam"), emit: bamfile_postalt
+    path("*_postalt.bam.flagstat")
+    script:
+    """
+    bwa mem -t ${task.cpus} ${reference_basename}.fa ${reads} > "${meta.sample}.bwamem.sam"
+    k8-linux /usr/local/bin/bwa-0.7.15/bwa-postalt.js \
+    ${reference_basename}.fa.alt \
+    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam |\
+    samtools view -bh -o ${meta.sample}_postalt.bam -
+    rm "${meta.sample}.bwamem.sam"  "${meta.sample}_postalt.sam"
+    samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
+    """
+}
+// ${meta.sample}_postalt.sam
+
 process samtools_sort{
     publishDir "$params.outdir/sort"
 
@@ -284,6 +306,13 @@ workflow alt_align_chr6{
         bwa_mem_align_alt.out.samfile,
         reference_basename
     )
+    /*
+    bwa_mem_align_alt_postalt(
+       ch_ref,
+       ch_fastq,
+       reference_basename
+    ) 
+    */  
     samtools_sort(
         bwa_mem_postalt.out.bamfile_postalt
     )
@@ -322,6 +351,7 @@ workflow alt_align_chr19{
     reference_basename
 
     main:
+    /*
     bwa_mem_align_alt(
         ch_ref,
         ch_fastq,
@@ -332,8 +362,14 @@ workflow alt_align_chr19{
         bwa_mem_align_alt.out.samfile,
         reference_basename
     )
+    */
+    bwa_mem_align_alt_postalt(
+       ch_ref,
+       ch_fastq,
+       reference_basename
+    )
     samtools_sort(
-        bwa_mem_postalt.out.bamfile_postalt
+        bwa_mem_align_alt_postalt.out.bamfile_postalt
     )
     samtools_index(
         samtools_sort.out.sortedbam
@@ -459,9 +495,12 @@ workflow {
     ch_hlatypes,
     reference_basename
     )
-    //alt_align_chr19.out.collect().view()
+    //println "altalign chromosome6 collect view "
+    //alt_align_chr6.out.collect().view()
+    //println "altalign chromosome6 without collect view"
+    //alt_align_chr6.out.view()
     prepPolysolver(
-    alt_align_chr6.out.collect(),
+    alt_align_chr6.out,
     ch_ref,
     reference_basename
     )
