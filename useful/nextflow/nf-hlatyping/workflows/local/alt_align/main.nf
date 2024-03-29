@@ -25,7 +25,7 @@ workflow alt_align{
        reference_basename
     )  
     samtools_sort(
-        bwa_mem_postalt.out.bamfile_postalt
+        bwa_mem_align_alt_postalt.out.bamfile_postalt
     )
     samtools_index(
         samtools_sort.out.sortedbam
@@ -37,7 +37,8 @@ workflow alt_align{
     extractContigs(
         ch_hlatypes,
         ch_ref,
-        reference_basename
+        reference_basename,
+        chr
     )
     fasta_index_bed(
         ch_ref,
@@ -46,7 +47,7 @@ workflow alt_align{
     )
     subsetBam(
         markduplicates.out.markdupbam,
-        extractContigs.out.alt_chr6_contigs,
+        extractContigs.out.alt_contigs,
         extractContigs.out.hla_contigs,
         ch_ref,
         fasta_index_bed.out.fasta_bed

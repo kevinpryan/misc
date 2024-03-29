@@ -38,32 +38,32 @@ process bwa_mem_align_alt{
     """
 }
 
-/*
-process bwa_mem_postalt{
-    publishDir "$params.outdir/postalt"
-
-    input:
-    path reference
-    tuple val(meta), path(samfile)
-    val reference_basename
-    output:
-    tuple val(meta), path("*_postalt.bam"), emit: bamfile_postalt
-    path("*_postalt.sam.header")
-    path("*_postalt.sam.flagstat")
-    path("*_postalt.bam.flagstat")
-
-    script:
-    """
-    k8-linux /usr/local/bin/bwa-0.7.15/bwa-postalt.js \
-    ${reference_basename}.fa.alt \
-    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam
-    samtools view -H ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.header
-    samtools flagstat ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.flagstat
-    samtools view -bh -o ${meta.sample}_postalt.bam ${meta.sample}_postalt.sam
-    samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
-    """
-}
-*/
+///*
+//process bwa_mem_postalt{
+//    publishDir "$params.outdir/postalt"
+//
+//    input:
+//    path reference
+//    tuple val(meta), path(samfile)
+//    val reference_basename
+//    output:
+//    tuple val(meta), path("*_postalt.bam"), emit: bamfile_postalt
+//    path("*_postalt.sam.header")
+//    path("*_postalt.sam.flagstat")
+//    path("*_postalt.bam.flagstat")
+//
+//    script:
+//    """
+//    k8-linux /usr/local/bin/bwa-0.7.15/bwa-postalt.js \
+//    ${reference_basename}.fa.alt \
+//    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam
+//    samtools view -H ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.header
+//    samtools flagstat ${meta.sample}_postalt.sam > ${meta.sample}_postalt.sam.flagstat
+//    samtools view -bh -o ${meta.sample}_postalt.bam ${meta.sample}_postalt.sam
+//    samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
+//    """
+//}
+//*/
 
 process bwa_mem_align_alt_postalt{
     publishDir "$params.outdir/bwa-aln-postalt"
@@ -288,122 +288,6 @@ process reheaderChr{
     """
 }
 
-    //samtools view -H ${bamfile} | sed '/^@SQ/s/SN\:chr/SN\:/' | samtools reheader - ${bamfile} > ${meta}_reheader.bam
-    //samtools index ${meta}_reheader.bam
-   // samtools flagstat ${meta}_reheader.bam > ${meta}_reheader.bam.flagstat
-   // samtools view -H ${meta}_reheader.bam > ${meta}_reheader.bam.header
-
-workflow alt_align{
-    take: 
-    ch_fastq
-    ch_ref
-    ch_hlatypes
-    reference_basename
-    chr
-    main:
-    bwa_mem_align_alt(
-        ch_ref,
-        ch_fastq,
-        reference_basename
-    )
-    bwa_mem_postalt(
-        ch_ref,
-        bwa_mem_align_alt.out.samfile,
-        reference_basename
-    )
-    /*
-    bwa_mem_align_alt_postalt(
-       ch_ref,
-       ch_fastq,
-       reference_basename
-    ) 
-    */  
-    samtools_sort(
-        bwa_mem_postalt.out.bamfile_postalt
-    )
-    samtools_index(
-        samtools_sort.out.sortedbam
-    )
-    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
-    markduplicates(
-        samtools_sorted_index
-    )
-    extractContigs(
-        ch_hlatypes,
-        ch_ref,
-        reference_basename,
-        chr
-    )
-    fasta_index_bed(
-        ch_ref,
-        chr,
-        reference_basename
-    )
-    subsetBam(
-        markduplicates.out.markdupbam,
-        extractContigs.out.alt_contigs,
-        extractContigs.out.hla_contigs,
-        ch_ref,
-        fasta_index_bed.out.fasta_bed
-    )
-    emit: subsetBam.out.subsetbam
-}
-
-workflow alt_align_chr19{
-    take: 
-    ch_fastq
-    ch_ref
-    ch_hlatypes
-    reference_basename
-
-    main:
-    /*
-    bwa_mem_align_alt(
-        ch_ref,
-        ch_fastq,
-        reference_basename
-    )
-    bwa_mem_postalt(
-        ch_ref,
-        bwa_mem_align_alt.out.samfile,
-        reference_basename
-    )
-    */
-    bwa_mem_align_alt_postalt(
-       ch_ref,
-       ch_fastq,
-       reference_basename
-    )
-    samtools_sort(
-        bwa_mem_align_alt_postalt.out.bamfile_postalt
-    )
-    samtools_index(
-        samtools_sort.out.sortedbam
-    )
-    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
-    markduplicates(
-        samtools_sorted_index
-    )
-    extractContigsTest(
-        ch_hlatypes,
-        ch_ref,
-        reference_basename
-    )
-    fasta_index_bed(
-        ch_ref,
-        "chr19",
-        reference_basename
-    )
-    subsetBamtest(
-        markduplicates.out.markdupbam,
-        extractContigsTest.out.alt_chr19_contigs,
-        extractContigsTest.out.hla_contigs,
-        ch_ref,
-        fasta_index_bed.out.fasta_bed
-    )
-    emit:
-    subsetBamtest.out.subsetbam
-}
 
 workflow prepPolysolver{
     /*
@@ -435,45 +319,6 @@ workflow prepPolysolver{
     )
 }
 
-/*
-workflow {
-    Channel.fromPath(params.samplesheet, checkIfExists: true)
-    | splitCsv( header:true )
-    | map { row ->
-        meta = row.subMap('sample')
-        [meta, [
-            file(row.fastq_1, checkIfExists: true),
-            file(row.fastq_2, checkIfExists: true)]]
-    }
-    | set { ch_fastq }
-    //ch_fastq.view()
-    reference_basename = Channel.value(params.reference_basename)
-    //Channel
-    //.fromPath(params.reference_dir, checkIfExists: true)
-    //.set { ch_ref }
-    ch_ref = file(params.reference_dir, checkIfExists: true)
-    //ch_ref.view()
-    //Channel
-    //.fromPath(params.hlatypes, checkIfExists: true)
-    //.set { ch_hlatypes }
-    ///.view()
-    ch_hlatypes = file(params.hlatypes, checkIfExists: true)
-    chromosome = Channel.value(params.chr)
-    alt_align(  
-    ch_fastq,
-    ch_ref,
-    ch_hlatypes,
-    reference_basename,
-    chromosome
-    )
-    //alt_align_chr19.out.collect().view()
-    prepPolysolver(
-    alt_align.out.collect(),
-    ch_ref,
-    reference_basename
-    )
-}
-*/
 
 // this version of the workflow works 20240329
 
