@@ -289,12 +289,13 @@ process reheaderChr{
    // samtools flagstat ${meta}_reheader.bam > ${meta}_reheader.bam.flagstat
    // samtools view -H ${meta}_reheader.bam > ${meta}_reheader.bam.header
 
-workflow alt_align_chr6{
+workflow alt_align{
     take: 
     ch_fastq
     ch_ref
     ch_hlatypes
     reference_basename
+    chr
     main:
     bwa_mem_align_alt(
         ch_ref,
@@ -330,7 +331,7 @@ workflow alt_align_chr6{
     )
     fasta_index_bed(
         ch_ref,
-        "chr6",
+        chr,
         reference_basename
     )
     subsetBam(
@@ -452,15 +453,17 @@ workflow {
     //.set { ch_hlatypes }
     ///.view()
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
-    alt_align_chr19(  
+    chromosome = Channel.value(params.chr)
+    alt_align(  
     ch_fastq,
     ch_ref,
     ch_hlatypes,
-    reference_basename
+    reference_basename,
+    chromosome
     )
     //alt_align_chr19.out.collect().view()
     prepPolysolver(
-    alt_align_chr19.out.collect(),
+    alt_align.out.collect(),
     ch_ref,
     reference_basename
     )
@@ -477,30 +480,19 @@ workflow {
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
-    //ch_fastq.view()
     reference_basename = Channel.value(params.reference_basename)
-    //Channel
-    //.fromPath(params.reference_dir, checkIfExists: true)
-    //.set { ch_ref }
     ch_ref = file(params.reference_dir, checkIfExists: true)
-    //ch_ref.view()
-    //Channel
-    //.fromPath(params.hlatypes, checkIfExists: true)
-    //.set { ch_hlatypes }
-    ///.view()
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
-    alt_align_chr6(
+    chromosome = Channel.value(params.chr)
+    alt_align(
     ch_fastq,
     ch_ref,
     ch_hlatypes,
-    reference_basename
+    reference_basename,
+    chromosome
     )
-    //println "altalign chromosome6 collect view "
-    //alt_align_chr6.out.collect().view()
-    //println "altalign chromosome6 without collect view"
-    //alt_align_chr6.out.view()
     prepPolysolver(
-    alt_align_chr6.out,
+    alt_align.out,
     ch_ref,
     reference_basename
     )
