@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include {alt_align} from "./workflows/alt_align"
 process fasta_index_bed{
     publishDir "$params.outdir/fasta_bed"
 
@@ -37,6 +38,7 @@ process bwa_mem_align_alt{
     """
 }
 
+/*
 process bwa_mem_postalt{
     publishDir "$params.outdir/postalt"
 
@@ -61,6 +63,7 @@ process bwa_mem_postalt{
     samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
     """
 }
+*/
 
 process bwa_mem_align_alt_postalt{
     publishDir "$params.outdir/bwa-aln-postalt"
@@ -472,6 +475,8 @@ workflow {
 }
 */
 
+// this version of the workflow works 20240329
+
 workflow {
     Channel.fromPath(params.samplesheet, checkIfExists: true)
     | splitCsv( header:true )
@@ -499,4 +504,5 @@ workflow {
     reference_basename
     )
 }
+
 
