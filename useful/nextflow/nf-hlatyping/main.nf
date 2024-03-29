@@ -338,7 +338,7 @@ workflow alt_align{
     )
     subsetBam(
         markduplicates.out.markdupbam,
-        extractContigs.out.alt_chr6_contigs,
+        extractContigs.out.alt_contigs,
         extractContigs.out.hla_contigs,
         ch_ref,
         fasta_index_bed.out.fasta_bed
