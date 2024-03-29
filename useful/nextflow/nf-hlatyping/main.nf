@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include {alt_align} from "./workflows/alt_align"
+include {alt_align} from "./workflows/local/alt_align"
 process fasta_index_bed{
     publishDir "$params.outdir/fasta_bed"
 
