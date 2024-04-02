@@ -2,7 +2,7 @@ process bam2fastq{
     publishDir "$params.outdir/bam2fastq"
 
     input:
-    tuple val(meta), path(subsetbam), path(subsetbam_bai)
+    tuple val(meta), path(reads)
     output:
     tuple val(meta), path("*.fq"), emit: subsetfastq
 
@@ -10,7 +10,7 @@ process bam2fastq{
     """
     sambamba view \
     -f "bam" -h -p -l 0 -t ${task.cpus} \
-    ${subsetbam} | sambamba sort -p -n -t ${task.cpus} -o - /dev/stdin |
+    *.bam | sambamba sort -p -n -t ${task.cpus} -o - /dev/stdin |
     samtools fastq /dev/stdin \
     -1 "${meta.sample}_subset.1.fq" \
     -2 "${meta.sample}_subset.2.fq" \
