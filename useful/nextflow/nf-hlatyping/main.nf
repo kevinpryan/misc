@@ -3,6 +3,7 @@
 include {alt_align} from "./workflows/local/alt_align"
 include { prepPolysolver } from "./workflows/local/prepPolysolver"
 
+/*
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
 
@@ -22,6 +23,7 @@ process bwa_mem_align_alt{
     samtools flagstat ${meta.sample}.bwamem.sam > ${meta.sample}.bwamem.sam.flagstat
     """
 }
+*/
 
 ///*
 //process bwa_mem_postalt{
@@ -50,6 +52,7 @@ process bwa_mem_align_alt{
 //}
 //*/
 
+/*
 process bam2fastq{
     publishDir "$params.outdir/bam2fastq"
 
@@ -69,7 +72,9 @@ process bam2fastq{
     -0 /dev/null -s /dev/null -n
     """
 }
+*/
 
+/*
 process realignwithoutAlt{
     publishDir "$params.outdir/realignwithoutAlt"
     
@@ -90,7 +95,9 @@ process realignwithoutAlt{
     samtools flagstat ${meta.sample}_realign.sam > ${meta.sample}_realign.sam.flagstat
     """
 }
+*/
 
+/*
 process reheaderChr{
     publishDir "$params.outdir/reheaderChr"
 
@@ -109,38 +116,44 @@ process reheaderChr{
     samtools view -H ${meta.sample}_reheader.bam > ${meta.sample}_reheader.bam.header
     """
 }
+*/
 
+process RUN_OPTITYPE{
+    publishDir "$params.outdir/OPTITYPE/${meta.sample}"
 
-//workflow prepPolysolver{
-//    /*
-//    need to realign without alt contigs and remove "chr" from bam header
-//    */
-//    take: 
-//    subsetbam
- //   reference
-//    reference_basename
-//
-//    main:
-//    bam2fastq(
-//        subsetbam
-//    )
-//    realignwithoutAlt(
-//        bam2fastq.out.subsetfastq,
-//        reference,
-//        reference_basename
-//        ) 
-//    samtools_sort(
-//       realignwithoutAlt.out.realignbam
-//        )
-//    samtools_index(
-//       samtools_sort.out.sortedbam
-//    )
-//    samtools_sorted_index = samtools_sort.out.sortedbam.join(samtools_index.out.bam_indexed, by: 0)
-//    reheaderChr(
-//        samtools_sorted_index
-//    )
-//}
+    input:
+    tuple val(meta), path(subsetfastq)
+    val dna_rna
 
+    output:
+    tuple val(meta), path("*"), emit: optitype
+
+    script:
+    """
+    OptiTypePipeline.py --input *1.fq *.2.fq --verbose --${dna_rna} --outdir /data4/kryan/misc/useful/nextflow/nf-hlatyping/testdir/3532
+
+    optitype -i ${subsetfastq} --${dna_rna} --outdir ./
+    """
+}
+
+workflow OPTITYPE{
+
+    take: 
+    subsetbam
+    reference
+    reference_basename
+    dna_rna
+
+    main:
+    bam2fastq(
+        subsetbam
+    )
+    RUN_OPTITYPE(
+        bam2fastq.out.subsetfastq,
+        dna_rna
+    )
+
+}
 
 // this version of the workflow works 20240329
 
@@ -158,6 +171,7 @@ workflow {
     ch_ref = file(params.reference_dir, checkIfExists: true)
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
     chromosome = Channel.value(params.chr)
+    dna_rna = Channel.value(params.dna_rna)
     alt_align(
     ch_fastq,
     ch_ref,

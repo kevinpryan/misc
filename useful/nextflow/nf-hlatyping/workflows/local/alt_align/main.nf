@@ -52,6 +52,7 @@ workflow alt_align{
         ch_ref,
         fasta_index_bed.out.fasta_bed
     )
-    emit: subsetBam.out.subsetbam
+    emit: 
+    subsetBam.out.subsetbam
 }
 

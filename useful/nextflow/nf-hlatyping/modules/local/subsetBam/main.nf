@@ -1,5 +1,5 @@
 process subsetBam{
-    publishDir "$params.outdir/subsetBam"
+    publishDir "$params.outdir/subsetBam", mode: 'copy'
 
     input:
     tuple val(meta), path(bamfile), path(bamfileIndex)

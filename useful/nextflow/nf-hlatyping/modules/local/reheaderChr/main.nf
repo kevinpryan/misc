@@ -1,5 +1,5 @@
 process reheaderChr{
-    publishDir "$params.outdir/reheaderChr"
+    publishDir "$params.outdir/reheaderChr", mode: 'copy'
 
     input:
     tuple val(meta), path(bamfile), path(bamfile_idx)
