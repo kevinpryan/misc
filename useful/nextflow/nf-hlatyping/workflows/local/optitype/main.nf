@@ -3,12 +3,11 @@ include { RUN_OPTITYPE } from '../../../modules/local/run_optitype'
 
 workflow optitype{
     /*
-    need to realign without alt contigs and remove "chr" from bam header
+    convert bam to fastq then run Optitype
     */
     take: 
     subsetbam
-    reference
-    reference_basename
+    dna_rna
 
     main:
     bam2fastq(
