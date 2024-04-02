@@ -12,9 +12,10 @@ process bwa_mem_align_alt_postalt{
     bwa mem -t ${task.cpus} ${reference_basename}.fa ${reads} > "${meta.sample}.bwamem.sam"
     k8-linux /usr/local/bin/bwa-0.7.15/bwa-postalt.js \
     ${reference_basename}.fa.alt \
-    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam |\
-    samtools view -bh -o ${meta.sample}_postalt.bam -
-    rm "${meta.sample}.bwamem.sam"  "${meta.sample}_postalt.sam"
+    ${meta.sample}.bwamem.sam > ${meta.sample}_postalt.sam
+    rm "${meta.sample}.bwamem.sam"
+    samtools view -bh -o ${meta.sample}_postalt.bam ${meta.sample}_postalt.sam
+    rm "${meta.sample}_postalt.sam"
     samtools flagstat ${meta.sample}_postalt.bam > ${meta.sample}_postalt.bam.flagstat
     """
 }
