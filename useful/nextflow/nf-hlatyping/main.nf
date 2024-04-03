@@ -4,6 +4,7 @@ include {alt_align} from "./workflows/local/alt_align"
 include { prepPolysolver } from "./workflows/local/prepPolysolver"
 include { optitype } from "./workflows/local/optitype"
 include { polysolver } from "./workflows/local/polysolver"
+include { hlala } from "./workflows/local/hlala"
 
 /*
 process bwa_mem_align_alt{
@@ -230,5 +231,8 @@ workflow {
         alt_align.out,
         ch_ref,
         reference_basename
+    )
+    hlala(
+        alt_align.out
     ) 
 }
