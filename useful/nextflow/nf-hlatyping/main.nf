@@ -2,6 +2,8 @@
 
 include {alt_align} from "./workflows/local/alt_align"
 include { prepPolysolver } from "./workflows/local/prepPolysolver"
+include { optitype } from "./workflows/local/optitype"
+include { polysolver } from "./workflows/local/polysolver"
 
 /*
 process bwa_mem_align_alt{
@@ -118,45 +120,9 @@ process reheaderChr{
 }
 */
 
-process RUN_OPTITYPE{
-    publishDir "$params.outdir/OPTITYPE/${meta.sample}"
-
-    input:
-    tuple val(meta), path(subsetfastq)
-    val dna_rna
-
-    output:
-    tuple val(meta), path("*"), emit: optitype
-
-    script:
-    """
-    OptiTypePipeline.py --input *1.fq *.2.fq --verbose --${dna_rna} --outdir /data4/kryan/misc/useful/nextflow/nf-hlatyping/testdir/3532
-
-    optitype -i ${subsetfastq} --${dna_rna} --outdir ./
-    """
-}
-
-workflow OPTITYPE{
-
-    take: 
-    subsetbam
-    reference
-    reference_basename
-    dna_rna
-
-    main:
-    bam2fastq(
-        subsetbam
-    )
-    RUN_OPTITYPE(
-        bam2fastq.out.subsetfastq,
-        dna_rna
-    )
-
-}
 
 // this version of the workflow works 20240329
-
+/*
 workflow {
     Channel.fromPath(params.samplesheet, checkIfExists: true)
     | splitCsv( header:true )
@@ -184,6 +150,85 @@ workflow {
     ch_ref,
     reference_basename
     )
+    optitype(
+    alt_align.out.subsetbam,
+    dna_rna
+    )
 }
+*/
 
+/*
+testing optitype
+workflow {
+    Channel.fromPath(params.samplesheet, checkIfExists: true)
+    | splitCsv( header:true )
+    | map { row ->
+        meta = row.subMap('sample')
+        [meta, [
+            file(row.bam, checkIfExists: true),
+            file(row.bai, checkIfExists: true)]]
+    }
+    | set { ch_bam }
+    dna_rna = Channel.value(params.dna_rna)
+    optitype(
+        ch_bam,
+        dna_rna
+    )   
+}
+*/
 
+/*
+just run polysolver
+workflow {
+    Channel.fromPath(params.samplesheet, checkIfExists: true)
+    | splitCsv( header:true )
+    | map { row ->
+        meta = row.subMap('sample')
+        [meta, [
+            file(row.bam, checkIfExists: true),
+            file(row.bai, checkIfExists: true)]]
+    }
+    | set { ch_bam }
+    ch_ref = file(params.reference_dir, checkIfExists: true)
+    reference_basename = Channel.value(params.reference_basename)
+    polysolver(
+        ch_bam,
+        ch_ref,
+        reference_basename
+    )
+}
+*/
+
+workflow {
+    Channel.fromPath(params.samplesheet, checkIfExists: true)
+    | splitCsv( header:true )
+    | map { row ->
+        meta = row.subMap('sample')
+        [meta, [
+            file(row.fastq_1, checkIfExists: true),
+            file(row.fastq_2, checkIfExists: true)]]
+    }
+    | set { ch_fastq }
+    reference_basename = Channel.value(params.reference_basename)
+    ch_ref = file(params.reference_dir, checkIfExists: true)
+    ch_hlatypes = file(params.hlatypes, checkIfExists: true)
+    chromosome = Channel.value(params.chr)
+    dna_rna = Channel.value(params.dna_rna)
+    alt_align(
+    ch_fastq,
+    ch_ref,
+    ch_hlatypes,
+    reference_basename,
+    chromosome
+    )
+    dna_rna = Channel.value(params.dna_rna)
+    optitype(
+        alt_align.out,
+        dna_rna
+    )
+    polysolver(
+        alt_align.out,
+        ch_ref,
+        reference_basename
+    ) 
+}
