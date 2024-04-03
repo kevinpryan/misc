@@ -1,4 +1,3 @@
-include { bam2fastq } from '../../../modules/local/bam2fastq'
 include { RUN_HLALA } from '../../../modules/local/run_hlala'
 
 workflow hlala{
@@ -9,9 +8,6 @@ workflow hlala{
     subsetbam
 
     main:
-    bam2fastq(
-        subsetbam
-    )
     RUN_HLALA(
         subsetbam
     )

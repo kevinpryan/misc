@@ -4,7 +4,7 @@ process RUN_POLYSOLVER{
     tuple val(meta), path(reads)
     output:
     tuple val(meta), path("winners.hla.nofreq.txt"), emit: polysolver_call
-    tuple val(meta), path("*counts")
+    tuple val(meta), path("counts*")
     path("check.status.out.txt")
     script:
     """

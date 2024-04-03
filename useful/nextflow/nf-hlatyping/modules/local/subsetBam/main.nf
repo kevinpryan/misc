@@ -8,9 +8,9 @@ process subsetBam{
     path reference
     path fasta_bed
     output:
-    tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), emit: subsetbam
+    tuple val(meta), path("*_subset.sorted.bam*"), emit: subsetbam
     path("*_subset.sorted.bam.flagstat")
-    path("*_subset.sorted.bam.flagstat") 
+    path("*_subset.sorted.bam.header") 
     script:
     """
     samtools view -o ${meta.sample}_subset1.bam -b ${bamfile} -L ${fasta_bed}
@@ -23,3 +23,4 @@ process subsetBam{
     samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
     """
 }
+//     tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), emit: subsetbam
