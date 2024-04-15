@@ -5,7 +5,7 @@ include { prepPolysolver } from "./workflows/local/prepPolysolver"
 include { optitype } from "./workflows/local/optitype"
 include { polysolver } from "./workflows/local/polysolver"
 include { hlala } from "./workflows/local/hlala"
-
+include { kourami } from "./workflows/local/kourami"
 /*
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
@@ -213,6 +213,8 @@ workflow {
     reference_basename = Channel.value(params.reference_basename)
     ch_ref = file(params.reference_dir, checkIfExists: true)
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
+    ch_ref_kourami = file(params.kourami_ref, checkIfExists: true)
+    ch_graph_kourami = file(params.kourami_graph, checkIfExists: true)
     chromosome = Channel.value(params.chr)
     dna_rna = Channel.value(params.dna_rna)
     alt_align(
@@ -235,4 +237,9 @@ workflow {
     hlala(
         alt_align.out
     ) 
+    kourami(
+        alt_align.out,
+        ch_ref_kourami,
+        ch_graph_kourami
+    )
 }
