@@ -6,10 +6,12 @@ workflow hlala{
     */
     take: 
     subsetbam
+    graphdir
 
     main:
     RUN_HLALA(
-        subsetbam
+        subsetbam,
+        graphdir
     )
     emit:
     RUN_HLALA.out.hlala_call

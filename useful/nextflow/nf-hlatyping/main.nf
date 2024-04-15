@@ -215,6 +215,7 @@ workflow {
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
     chromosome = Channel.value(params.chr)
     dna_rna = Channel.value(params.dna_rna)
+    ch_graph = file(params.hla_la_graph, checkIfExists: true)
     alt_align(
     ch_fastq,
     ch_ref,
@@ -233,6 +234,7 @@ workflow {
         reference_basename
     )
     hlala(
-        alt_align.out
+        alt_align.out,
+        ch_graph
     ) 
 }
