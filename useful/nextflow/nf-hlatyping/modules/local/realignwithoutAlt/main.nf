@@ -1,5 +1,5 @@
 process realignwithoutAlt{
-    publishDir "$params.outdir/realignwithoutAlt", mode: 'copy'
+    publishDir "$params.outdir/realignwithoutAlt"
     
     input:
     tuple val(meta), path(reads)

@@ -7,15 +7,15 @@ workflow optitype{
     */
     take: 
     subsetbam
-    dna_rna
+    //dna_rna
 
     main:
     bam2fastq(
         subsetbam
     )
     RUN_OPTITYPE(
-        bam2fastq.out.subsetfastq,
-        dna_rna
+        bam2fastq.out.subsetfastq//,
+        //dna_rna
     )
     emit:
     RUN_OPTITYPE.out.optitype_call

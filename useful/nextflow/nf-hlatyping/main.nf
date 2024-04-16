@@ -1,11 +1,13 @@
 #!/usr/bin/env nextflow
 
-include {alt_align} from "./workflows/local/alt_align"
-include { prepPolysolver } from "./workflows/local/prepPolysolver"
-include { optitype } from "./workflows/local/optitype"
-include { polysolver } from "./workflows/local/polysolver"
-include { hlala } from "./workflows/local/hlala"
-include { kourami } from "./workflows/local/kourami"
+include {alt_align} from "./subworkflows/local/alt_align"
+include { prepPolysolver } from "./subworkflows/local/prepPolysolver"
+include { optitype } from "./subworkflows/local/optitype"
+include { polysolver } from "./subworkflows/local/polysolver"
+include { hlala } from "./subworkflows/local/hlala"
+include { kourami } from "./subworkflows/local/kourami"
+include { FASTP } from "./modules/nf-core/fastp"
+
 /*
 process bwa_mem_align_alt{
     publishDir "$params.outdir/align"
@@ -200,35 +202,50 @@ workflow {
 }
 */
 
-workflow {
+workflow HLATYPING {
+    // TODO: add samplesheet check, seq_type should be in dna,rna 
     Channel.fromPath(params.samplesheet, checkIfExists: true)
     | splitCsv( header:true )
     | map { row ->
-        meta = row.subMap('sample')
+        meta = row.subMap('sample', 'seq_type')
         [meta, [
             file(row.fastq_1, checkIfExists: true),
             file(row.fastq_2, checkIfExists: true)]]
     }
     | set { ch_fastq }
+    ch_fastq.view()
     reference_basename = Channel.value(params.reference_basename)
     ch_ref = file(params.reference_dir, checkIfExists: true)
     ch_hlatypes = file(params.hlatypes, checkIfExists: true)
-    ch_ref_kourami = file(params.kourami_ref, checkIfExists: true)
-    ch_graph_kourami = file(params.kourami_graph, checkIfExists: true)
     chromosome = Channel.value(params.chr)
-    dna_rna = Channel.value(params.dna_rna)
+    //dna_rna = Channel.value(params.dna_rna)
     ch_graph = file(params.hla_la_graph, checkIfExists: true)
-    alt_align(
+    ch_ref_kourami = file(params.kourami_ref, checkIfExists: true)
+    ch_db_kourami = file(params.kourami_database, checkIfExists: true)
+    //ch_adapter_fasta = file(params.adapter_fasta, checkIfExists: true)
+    if (params.trimmer == 'fastp') {
+    ch_adapter_fasta = Channel.empty()
+    FASTP (
     ch_fastq,
+    ch_adapter_fasta,
+    params.save_trimmed_fail,
+    params.save_merged
+    )
+    ch_fastq_align = FASTP.out.reads
+    } else {
+    ch_fastq_align = ch_fastq
+    }
+    ch_fastq_align.view()
+    alt_align(
+    ch_fastq_align,
     ch_ref,
     ch_hlatypes,
     reference_basename,
     chromosome
     )
-    dna_rna = Channel.value(params.dna_rna)
     optitype(
-        alt_align.out,
-        dna_rna
+        alt_align.out//,
+        //dna_rna
     )
     polysolver(
         alt_align.out,
@@ -241,7 +258,7 @@ workflow {
     ) 
     kourami(
         alt_align.out,
-        ch_ref_kourami,
-        ch_graph_kourami
+        ch_db_kourami,
+        ch_ref_kourami
     )
 }
