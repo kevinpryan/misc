@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { HLATYPING } from "./workflows/nf-core/hlatyping"
+include { HLATYPING } from "./workflows/hlatyping"
 
 workflow {
     Channel.fromPath(params.samplesheet, checkIfExists: true)
