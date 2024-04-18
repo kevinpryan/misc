@@ -1,5 +1,5 @@
 # Endogenous retroviruses
-List of annotated endogenous retroviral genes downloaded from https://g-a8b222.dd271.03c0.data.globus.org/pub/databases/genenames/hgnc/tsv/locus_types/endogenous_retrovirus.txt one 18/04/2024
+List of ERVs comes from HGNC website
 
 run:
 
