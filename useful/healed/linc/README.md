@@ -14,7 +14,7 @@ Output:
 
 ```{console}
 number of LINCs in hgnc_non_coding_rnas.txt that are present in the BED file:
-9113
-number of LINCs in hgnc_non_coding_rnas.txt that are not present in the BED file:
-278766
+1275
+Number of non-coding RNAs not in panel
+3485
 ```
