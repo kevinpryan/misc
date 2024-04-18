@@ -12,6 +12,6 @@ Output:
 ```{console}
 Number of ERVs in the panel:
 10
-Number of ERVs not in the panel:
-287869
+Number of ERVs not in panel
+99
 ```
