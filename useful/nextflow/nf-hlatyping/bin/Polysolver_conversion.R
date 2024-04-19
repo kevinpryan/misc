@@ -1,6 +1,6 @@
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/Polysolver_conversion.R
 # Read in the output and store as R dataframe
-toolOutputToR.Polysolver <- function(outputFolder) {
+toolOutputToR.Polysolver <- function(outputFolder, trim = T) {
   # Get a list of file names in the given outputFolder
   fileList <-
     list.files(path = outputFolder,
@@ -21,8 +21,14 @@ toolOutputToR.Polysolver <- function(outputFolder) {
     spread("key", "value")
   
   # Force non-unique column names as this is required by the scripts of the students
-  colnames(res) <- str_remove(colnames(res), "[0-9]+$")
   # Use classical dataframe with rownames
   res = column_to_rownames(res, "sample_id")
+  if (trim == T){
+    trim_function <- function(x){ paste(strsplit(x, split = ":")[[1]][1:2], collapse = ":") }
+    for (i in 1:ncol(res)){
+      res[1,i] <- trim_function(res[1,i])
+    }
+  }
+  colnames(res) <- str_remove(colnames(res), "[0-9]+$")
   res
 }

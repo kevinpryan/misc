@@ -1,13 +1,16 @@
 
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/HLA-LA_conversion.R
-toolOutputToR.HLA_LA <- function(outputFolder) {
+toolOutputToR.HLA_LA <- function(outputFolder, mhci_only = F, trim = F) {
   
   # Get a list of specific txt files in the given output folder
   fileList <- list.files(path = outputFolder, pattern = "*_bestguess_G.txt$")
   print(fileList)
   # Define the expected loci
-  loci <- c("A", "B", "C", "DPA1", "DPB1", "DQA1", "DQB1", "DRB1")
-  
+  if (mhci_only == T){
+  loci <- c("A", "B", "C")
+  } else {
+    loci <- c("A", "B", "C", "DPA1", "DPB1", "DQA1", "DQB1", "DRB1")
+  }
   if (length(fileList) == 0) {
     results <- data.frame(matrix(NA, nrow = 0, ncol = length(loci) * 2))
     return(results)
@@ -44,6 +47,10 @@ toolOutputToR.HLA_LA <- function(outputFolder) {
         allele <- gsub("[A-Z]{1,3}[0-9]*\\*", "", data[row, 3])
         # ensure trimming of whitespace
         allele <- gsub("\\s", "", allele)
+      }
+      if (trim == T){
+        # trim to 2 field/peptide resolution
+        allele <- paste(strsplit(allele, split = ":")[[1]][1:2], collapse = ":")
       } else {
         allele <- NA
       }

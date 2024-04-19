@@ -2,11 +2,11 @@ library(tidyverse)
 future::plan(future::multicore)
 
 # Functions
-source("scripts/functions/extract_dataset.R")
-source("scripts/functions/build_group_arg_list.R")
-source("scripts/functions/meta_prediction.R")
+#source("scripts/functions/extract_dataset.R")
+#source("scripts/functions/build_group_arg_list.R")
+#source("scripts/functions/meta_prediction.R")
 
-tie_solver <- readRDS("data/metaclassifier_dependencies/tie_solver.rds")
+#tie_solver <- readRDS("data/metaclassifier_dependencies/tie_solver.rds")
 
 # Which tools are selected for which data type and MHC class
 tool_selector_compact <- readRDS("data/meta_optimized.rds") %>%
@@ -119,4 +119,4 @@ for (ds in c("1kg", "NCI-60", "TCGA", "Liu", "Riaz")) {
   }
 }
 
-saveRDS(predictions_meta, "data/hla_predictions_ggroup_meta.rds")
+#saveRDS(predictions_meta, "data/hla_predictions_ggroup_meta.rds")
