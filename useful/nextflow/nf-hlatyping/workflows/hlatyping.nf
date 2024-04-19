@@ -70,4 +70,16 @@ workflow HLATYPING {
         ch_db_kourami,
         ch_ref_kourami
     )
+    // rough idea of end of pipeline
+    // this will be in a subworkflow
+    // see /home/kevin/Documents/PhD/nextflow_test/test2/main.nf for working example
+    // not sure whether to use arcashla or not
+    // docker image: r-basic:dev
+    RUN_OPTITYPE.out.mix(RUN_KOURAMI.out, RUN_POLYSOLVER.out, RUN_HLALA.out)
+           .groupTuple(by: 0, size: 3)
+           .set(HLATYPING_RESULTS)
+           //.view()
+    COMBINE_HLATYPING(HLATYPING_RESULTS)
+    ARCASHLA_CONVERT(COMBINE_HLATYPING.out.table)
+    MAJORITY_VOTE(ARCASHLA_CONVERT.out.converted)
 }
