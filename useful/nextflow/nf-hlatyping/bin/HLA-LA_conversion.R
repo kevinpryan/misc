@@ -4,7 +4,6 @@ toolOutputToR.HLA_LA <- function(outputFolder, mhci_only = F, trim = F) {
   
   # Get a list of specific txt files in the given output folder
   fileList <- list.files(path = outputFolder, pattern = "*_bestguess_G.txt$")
-  print(fileList)
   # Define the expected loci
   if (mhci_only == T){
   loci <- c("A", "B", "C")
