@@ -32,7 +32,6 @@ workflow HLATYPING {
     ch_graph = file(hla_la_graph, checkIfExists: true)
     ch_ref_kourami = file(kourami_ref, checkIfExists: true)
     ch_db_kourami = file(kourami_database, checkIfExists: true)
-    ch_fastq.view()
     if (trimmer == 'fastp') {
     //ch_adapter_fasta = Channel.empty()
     FASTP (
