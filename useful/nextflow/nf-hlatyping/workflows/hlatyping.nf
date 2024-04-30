@@ -7,6 +7,7 @@ include { polysolver } from "../subworkflows/local/polysolver"
 include { hlala } from "../subworkflows/local/hlala"
 include { kourami } from "../subworkflows/local/kourami"
 include { FASTP } from "../modules/nf-core/fastp"
+include { MAJORITY_VOTE } from "../modules/nf-core/fastp"
 
 workflow HLATYPING {
     // TODO: add samplesheet check, seq_type should be in dna,rna 
@@ -23,6 +24,7 @@ workflow HLATYPING {
     save_trimmed_fail
     save_merged
     adapter_fasta
+    benchmarking
     
     main:
     reference_basename = Channel.value(reference_basename)
@@ -32,7 +34,9 @@ workflow HLATYPING {
     ch_graph = file(hla_la_graph, checkIfExists: true)
     ch_ref_kourami = file(kourami_ref, checkIfExists: true)
     ch_db_kourami = file(kourami_database, checkIfExists: true)
-    ch_fastq.view()
+    ch_benchmark = file(benchmarking, checkIfExists: true)
+
+    //ch_fastq.view()
     if (trimmer == 'fastp') {
     //ch_adapter_fasta = Channel.empty()
     FASTP (
@@ -75,11 +79,18 @@ workflow HLATYPING {
     // see /home/kevin/Documents/PhD/nextflow_test/test2/main.nf for working example
     // not sure whether to use arcashla or not
     // docker image: r-basic:dev
-    RUN_OPTITYPE.out.mix(RUN_KOURAMI.out, RUN_POLYSOLVER.out, RUN_HLALA.out)
+
+    // untested on real data from here on in
+    RUN_OPTITYPE.out.optitype.mix(RUN_KOURAMI.out.kourami, RUN_POLYSOLVER.out.polysolver)
            .groupTuple(by: 0, size: 3)
-           .set(HLATYPING_RESULTS)
-           //.view()
-    COMBINE_HLATYPING(HLATYPING_RESULTS)
-    ARCASHLA_CONVERT(COMBINE_HLATYPING.out.table)
-    MAJORITY_VOTE(ARCASHLA_CONVERT.out.converted)
+           .set{ ch_hlatyping_outputs }
+    ch_hlatyping_outputs
+                    .map{meta, results ->
+                        [ meta, results.collect { it.getParent() } ]
+                    }
+                    .set{ ch_hlatyping_outputs_grouped }
+    MAJORITY_VOTE(
+        ch_hlatyping_outputs_grouped,
+        ch_benchmark
+    )    
 }
