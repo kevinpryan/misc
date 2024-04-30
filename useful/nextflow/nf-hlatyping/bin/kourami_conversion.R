@@ -1,14 +1,17 @@
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/kourami_conversion.R
 # Read in the output of kourami and store as R dataframe
 
-toolOutputToR.kourami <- function(outputFolder){
+toolOutputToR.kourami <- function(outputFolder, mhci_only = F, trim = F){
   
   # Get a list of .json file names in the given outputFolder
   fileList <- list.files(outputFolder, pattern = "\\.result$", full.names = T)
   
   # Define the expected loci
+  if (mhci_only == TRUE){
+    geneTypes <- c("A","B","C")
+  } else {  
   geneTypes <- c("A","B","C","DPA1","DPB1","DQA1","DQB1","DRB1")
-  
+  }
   # Create a data frame to store the results in
   results <- data.frame(matrix(NA, nrow = length(fileList), ncol = length(geneTypes)*2))
   names(results) <- rep(geneTypes, each = 2)
@@ -44,7 +47,10 @@ toolOutputToR.kourami <- function(outputFolder){
         next
       }
       colIndex <- which(names(results) %in% gene)
-      
+      if (trim == T){
+        # trim to 2 field/peptide resolution
+        allele <- paste(strsplit(allele, split = ":")[[1]][1:2], collapse = ":")
+      }
       # Store allele in the first of the two gene columns when available, otherwise in the second
       if(is.na(results[i, colIndex[1]])){
         results[i, colIndex[1]] <- allele
