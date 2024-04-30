@@ -1,7 +1,7 @@
 #!/usr/bin/Rscript
 
 # script to take in the outputs of 4 HLA typing tools and carry out majority voting to get the MHC I calls
-# usage: Rscript parse_outputs_majority_vote.R --samplename meta.id --optitype /path/to/optitype/*_result.tsv --polysolver /path/to/polysolver/winners.hla.nofreq.txt --kourami /path/to/kourami/*.result --hlala /path/to/hlala/*_bestguess_G.txt --benchmark /path/to/benchmark/results.txt
+# usage: Rscript parse_outputs_majority_vote.R --samplename meta.id --optitype /path/to/optitype/ --polysolver /path/to/polysolver/ --kourami /path/to/kourami/ --hlala /path/to/hlala/ --benchmark /path/to/benchmark/results.txt
 # load libraries
 library(optparse)
 library(dplyr)
@@ -10,14 +10,21 @@ library(tibble)
 library(tidyr)
 library(vroom)
 # source functions
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/HLA-LA_conversion.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/Optitype_conversion.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/Polysolver_conversion.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/kourami_conversion.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/majority_voting.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
-source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/HLA-LA_conversion.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/Optitype_conversion.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/Polysolver_conversion.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/kourami_conversion.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/majority_voting.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
+# source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
 
+source("HLA-LA_conversion.R")
+source("Optitype_conversion.R")
+source("Polysolver_conversion.R")
+source("kourami_conversion.R")
+source("majority_voting.R")
+source("df_to_list.R")
+source("are_vectors_identical.R")
 # take in command line arguments
 
 option_list = list(
@@ -56,6 +63,7 @@ opt$benchmark -> benchmark_in
 
 #samplename <- "3532"
 hlala <- toolOutputToR.HLA_LA(hlala_in, mhci_only = T, trim = T)
+print(hlala)
 optitype <- toolOutputToR.Optitype(optitype_in)
 polysolver <- toolOutputToR.Polysolver(polysolver_in, trim = T)
 kourami <- toolOutputToR.kourami(kourami_in, mhci_only = T, trim = T)
