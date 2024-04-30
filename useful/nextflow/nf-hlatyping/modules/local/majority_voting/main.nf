@@ -6,8 +6,8 @@ process MAJORITY_VOTE{
     path benchmark
 
     output:
-    tuple val(meta), path("*_all_calls_mhci.tsv"), path("*_majority_vote_mhci.tsv"), emit: results
-
+    tuple val(meta), path("*_all_calls_mhci.tsv"), emit: all_calls
+    tuple val(meta), path("*_majority_vote_mhci.tsv"), emit: majority_vote
 
     script:
     """
