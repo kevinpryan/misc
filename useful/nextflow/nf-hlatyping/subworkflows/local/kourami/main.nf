@@ -23,4 +23,6 @@ workflow kourami{
         RUN_KOURAMI_ALIGN_EXTRACT.out.kourami_alignment,
         kourami_panel
     )
+    emit:
+    RUN_KOURAMI_JAR.out.kourami_result
 }

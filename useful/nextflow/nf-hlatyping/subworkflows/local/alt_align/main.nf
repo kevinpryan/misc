@@ -19,7 +19,6 @@ workflow alt_align{
     reference_basename
     chr
     main:
-    ch_fastq.view()
     bwa_mem_align_alt_postalt(
        ch_ref,
        ch_fastq,

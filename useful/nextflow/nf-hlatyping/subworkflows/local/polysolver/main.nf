@@ -32,5 +32,7 @@ workflow polysolver{
         )
     RUN_POLYSOLVER(
         samtools_sort_index.out.sortedbam
-    )    
+    )
+    emit:
+    RUN_POLYSOLVER.out.polysolver_call 
 }

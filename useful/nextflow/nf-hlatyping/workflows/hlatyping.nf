@@ -7,7 +7,7 @@ include { polysolver } from "../subworkflows/local/polysolver"
 include { hlala } from "../subworkflows/local/hlala"
 include { kourami } from "../subworkflows/local/kourami"
 include { FASTP } from "../modules/nf-core/fastp"
-include { MAJORITY_VOTE } from "../modules/nf-core/fastp"
+include { MAJORITY_VOTE } from "../modules/local/majority_voting"
 
 workflow HLATYPING {
     // TODO: add samplesheet check, seq_type should be in dna,rna 
@@ -24,7 +24,6 @@ workflow HLATYPING {
     save_trimmed_fail
     save_merged
     adapter_fasta
-    benchmarking
     
     main:
     reference_basename = Channel.value(reference_basename)
@@ -79,8 +78,8 @@ workflow HLATYPING {
     // docker image: r-basic:dev
 
     // untested on real data from here on in
-    RUN_OPTITYPE.out.optitype.mix(RUN_KOURAMI.out.kourami, RUN_POLYSOLVER.out.polysolver)
-           .groupTuple(by: 0, size: 3)
+    optitype.out.mix(kourami.out, polysolver.out, hlala.out)
+           .groupTuple(by: 0, size: 4)
            .set{ ch_hlatyping_outputs }
     ch_hlatyping_outputs
                     .map{meta, results ->
@@ -91,7 +90,6 @@ workflow HLATYPING {
         ch_hlatyping_outputs_grouped,
         ch_benchmark
     )
-    MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', newLine: true, keepHeader: 1, sort: { it[0] }) { it[1] }
-    MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', newLine: true, keepHeader: 1, sort: { it[0] }) { it[1] }   
-    
+    MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
+    MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }   
 }
