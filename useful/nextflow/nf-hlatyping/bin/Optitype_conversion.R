@@ -1,5 +1,6 @@
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/Optitype_conversion.R
 # Read in the output and store as R dataframe
+#' @export
 toolOutputToR.Optitype <- function(outputFolder) {
   # Get a list of file names in the given outputFolder
   fileList <- list.files(path = outputFolder,

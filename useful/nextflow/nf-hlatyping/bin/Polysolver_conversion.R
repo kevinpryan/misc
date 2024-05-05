@@ -1,5 +1,6 @@
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/Polysolver_conversion.R
 # Read in the output and store as R dataframe
+#' @export
 toolOutputToR.Polysolver <- function(outputFolder, trim = T) {
   # Get a list of file names in the given outputFolder
   fileList <-

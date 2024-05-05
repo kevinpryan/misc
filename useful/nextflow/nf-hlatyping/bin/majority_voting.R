@@ -1,3 +1,4 @@
+#' @export
 majority_vote <- function(comparison, calls) {
   stopifnot(nrow(comparison) == 4)
   stopifnot(length(calls) == 4)

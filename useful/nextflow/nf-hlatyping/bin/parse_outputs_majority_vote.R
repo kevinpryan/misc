@@ -18,13 +18,13 @@ library(vroom)
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
 
-source("HLA-LA_conversion.R")
-source("Optitype_conversion.R")
-source("Polysolver_conversion.R")
-source("kourami_conversion.R")
-source("majority_voting.R")
-source("df_to_list.R")
-source("are_vectors_identical.R")
+box::use(HLA-LA_conversion[...])
+box::use(Optitype_conversion[...])
+box::use(Polysolver_conversion[...])
+box::use(kourami_conversion[...])
+box::use(majority_voting[...])
+box::use(df_to_list[...])
+box::use(are_vectors_identical[...])
 # take in command line arguments
 
 option_list = list(

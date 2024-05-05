@@ -1,6 +1,5 @@
-#!/usr/bin/env Rscript
-
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/HLA-LA_conversion.R
+#' @export
 toolOutputToR.HLA_LA <- function(outputFolder, mhci_only = F, trim = F) {
   
   # Get a list of specific txt files in the given output folder

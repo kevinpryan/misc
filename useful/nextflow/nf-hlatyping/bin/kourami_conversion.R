@@ -1,6 +1,6 @@
 # script source: https://github.com/CCGGlab/mhc_genotyping/blob/main/scripts/functions/Conversion/kourami_conversion.R
 # Read in the output of kourami and store as R dataframe
-
+#' @export
 toolOutputToR.kourami <- function(outputFolder, mhci_only = F, trim = F){
   
   # Get a list of .json file names in the given outputFolder
