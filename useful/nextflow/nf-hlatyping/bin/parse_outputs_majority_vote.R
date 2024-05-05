@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+#!/usr/bin/env Rscript
 
 # script to take in the outputs of 4 HLA typing tools and carry out majority voting to get the MHC I calls
 # usage: Rscript parse_outputs_majority_vote.R --samplename meta.id --optitype /path/to/optitype/ --polysolver /path/to/polysolver/ --kourami /path/to/kourami/ --hlala /path/to/hlala/ --benchmark /path/to/benchmark/results.txt

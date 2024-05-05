@@ -11,6 +11,8 @@ process MAJORITY_VOTE{
 
     script:
     """
-    Rscript parse_outputs_majority_vote.R --samplename ${meta.sample} --optitype ${meta.sample} --polysolver ${meta.sample} --hlala ${meta.sample}/${meta.sample}/hla/ --kourami ${meta.sample} --benchmark ${benchmark}
+    Rscript ${params.rundir}/bin/parse_outputs_majority_vote.R --samplename ${meta.sample} --optitype ${meta.sample} --polysolver ${meta.sample} --hlala ${meta.sample}/${meta.sample}/hla/ --kourami ${meta.sample} --benchmark ${benchmark}
     """
 }
+#     Rscript ${params.rundir}/bin/parse_outputs_majority_vote.R --samplename ${meta.sample} --optitype ${meta.sample} --polysolver ${meta.sample} --hlala ${meta.sample}/${meta.sample}/hla/ --kourami ${meta.sample} --benchmark ${benchmark}
+

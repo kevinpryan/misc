@@ -13,7 +13,7 @@ workflow {
     }
     | set { ch_fastq }
 // example ch_fastq: [[sample:3532, seq_type:dna], [/data4/kryan/misc/useful/nextflow/nf-hlatyping/testdir/gen_testdata/3532_subset_10000.1.fq.gz, /data4/kryan/misc/useful/nextflow/nf-hlatyping/testdir/gen_testdata/3532_subset_10000.2.fq.gz]]
-
+ch_fastq.view()
     HLATYPING(
         ch_fastq,
         params.reference_basename,
