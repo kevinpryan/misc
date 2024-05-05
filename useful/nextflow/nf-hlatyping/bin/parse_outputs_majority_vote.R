@@ -18,13 +18,13 @@ library(vroom)
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
 
-box::use(HLA-LA_conversion[...])
-box::use(Optitype_conversion[...])
-box::use(Polysolver_conversion[...])
-box::use(kourami_conversion[...])
-box::use(majority_voting[...])
-box::use(df_to_list[...])
-box::use(are_vectors_identical[...])
+box::use(lib/HLA_LA_conversion[...])
+box::use(lib/Optitype_conversion[...])
+box::use(lib/Polysolver_conversion[...])
+box::use(lib/kourami_conversion[...])
+box::use(lib/majority_voting[...])
+box::use(lib/df_to_list[...])
+box::use(lib/are_vectors_identical[...])
 # take in command line arguments
 
 option_list = list(
@@ -63,15 +63,24 @@ opt$benchmark -> benchmark_in
 
 #samplename <- "3532"
 hlala <- toolOutputToR.HLA_LA(hlala_in, mhci_only = T, trim = T)
+print("hlala")
 print(hlala)
 optitype <- toolOutputToR.Optitype(optitype_in)
+print("optitype")
+print(optitype)
 polysolver <- toolOutputToR.Polysolver(polysolver_in, trim = T)
+print("polysolver")
+print(polysolver)
 kourami <- toolOutputToR.kourami(kourami_in, mhci_only = T, trim = T)
+print("kourami")
+print(kourami)
 combined <- rbind(hlala, optitype, polysolver, kourami)
 rownames(combined) <- c("hlala", "optitype", "polysolver", "kourami")
 combined$tool <- rownames(combined)
 combined$sample <- rep(samplename, nrow(combined))
 
+print("combined")
+print(combined)
 # Read in benchmarking (might not be necessary - just using optitype as best)
 benchmark <- read.csv(benchmark_in)
 benchmark <- benchmark %>% dplyr::filter(tool %in% c("HLA*LA", "Kourami", "Optitype", "Polysolver") & seq_type == "WES")
@@ -86,18 +95,20 @@ colnames(combined) <- c("A1", "A2", "B1", "B2", "C1", "C2", "tool", "sample")
 
 # Run majority voting for HLA-A
 A_list <- df_to_list(combined, cols = c("A1", "A2"))
+print("df to list A")
+print(A_list)
 A_identical <- outer(A_list, A_list, FUN = are_vectors_identical_vectorised)
-A_vote <- majority_vote(A_identical, A_list)
+A_vote <- majority_vote2(A_identical, A_list)
 
 # Run majority voting for HLA-B
 B_list <- df_to_list(combined, cols = c("B1", "B2"))
 B_identical <- outer(B_list, B_list, FUN = are_vectors_identical_vectorised)
-B_vote <- majority_vote(B_identical, B_list)
+B_vote <- majority_vote2(B_identical, B_list)
 
 # Run majority voting for HLA-C
 C_list <- df_to_list(combined, cols = c("C1", "C2"))
 C_identical <- outer(C_list, C_list, FUN = are_vectors_identical_vectorised)
-C_vote <- majority_vote(C_identical, C_list)
+C_vote <- majority_vote2(C_identical, C_list)
 
 # prepare outputs: table with all calls across all tools, table with majority voting result
 rownames(combined) <- NULL

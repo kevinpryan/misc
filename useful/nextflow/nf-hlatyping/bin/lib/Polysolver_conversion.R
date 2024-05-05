@@ -2,6 +2,11 @@
 # Read in the output and store as R dataframe
 #' @export
 toolOutputToR.Polysolver <- function(outputFolder, trim = T) {
+  box::use(vroom[...])
+  box::use(dplyr[...])
+  box::use(tidyr[...])
+  box::use(stringr[...])
+  box::use(tibble[...])
   # Get a list of file names in the given outputFolder
   fileList <-
     list.files(path = outputFolder,

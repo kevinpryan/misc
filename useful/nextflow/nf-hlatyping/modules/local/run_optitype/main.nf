@@ -1,5 +1,5 @@
 process RUN_OPTITYPE{
-    publishDir "${params.outdir}/optitype/${meta.sample}", mode: 'copy'
+    publishDir "${params.outdir}/optitype_calls/${meta.sample}", mode: 'copy'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/optitype:1.3.5--0' :
         'quay.io/biocontainers/optitype:1.3.5--0' }"
@@ -7,12 +7,13 @@ process RUN_OPTITYPE{
     tuple val(meta), path(reads)
     //val dna_rna
     output:
-    tuple val(meta), path("*.tsv"), emit: optitype_call
-    tuple val(meta), path("*.pdf")
+    tuple val(meta), path("optitype_calls"), emit: optitype_call // will be a directory called optitype_calls containing the tsv and pdf
+    //tuple val(meta), path("*.pdf")
     script:
     """
     OptiTypePipeline.py --input *.1.fq *.2.fq --verbose --${meta.seq_type} --outdir ${meta.sample}
-    cp "${meta.sample}"/*/*.tsv .
-    cp "${meta.sample}"/*/*.pdf .
+    mkdir -p optitype_calls
+    cp "${meta.sample}"/*/*.tsv optitype_calls
+    cp "${meta.sample}"/*/*.pdf optitype_calls
     """
 }

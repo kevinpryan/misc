@@ -83,9 +83,11 @@ workflow HLATYPING {
            .set{ ch_hlatyping_outputs }
     ch_hlatyping_outputs
                     .map{meta, results ->
-                        [ meta, results.collect { it.getParent() } ]
+                        //[ meta, results.collect { it.getParent() } ]
+                        [ meta, results.collect { it } ]
                     }
                     .set{ ch_hlatyping_outputs_grouped }
+    //ch_hlatyping_outputs.view()
     MAJORITY_VOTE(
         ch_hlatyping_outputs_grouped,
         ch_benchmark
