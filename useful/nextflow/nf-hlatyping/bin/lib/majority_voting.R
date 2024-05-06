@@ -158,6 +158,11 @@ majority_vote3 <- function(comparison, calls, benchmark, hla) {
 
 #' @export
 majority_vote_comparison <- function(comparison, calls, benchmark, hla) {
+  # if all NA
+  if (nrow(comparison) == 0){
+    print("all NA")
+    return(c(NA,NA))
+  }
   tools <- rownames(comparison)
   benchmark <- benchmark[which(benchmark$tool %in% tools),]
   ranks <- benchmark[[hla]]
