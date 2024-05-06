@@ -3,7 +3,7 @@
 #' @export
 toolOutputToR.kourami <- function(outputFolder, mhci_only = F, trim = F){
   box::use(utils[...])
-
+  
   # Get a list of .json file names in the given outputFolder
   fileList <- list.files(outputFolder, pattern = "\\.result$", full.names = T)
   

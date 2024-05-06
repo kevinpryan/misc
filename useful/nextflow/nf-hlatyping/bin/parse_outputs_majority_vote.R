@@ -17,7 +17,7 @@ library(vroom)
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/majority_voting.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
-
+box::purge_cache()
 box::use(lib/HLA_LA_conversion[...])
 box::use(lib/Optitype_conversion[...])
 box::use(lib/Polysolver_conversion[...])
@@ -61,26 +61,22 @@ opt$benchmark -> benchmark_in
 
 # Read in files
 
+samplename <- "3532"
+optitype_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/optitype_calls/3532/optitype_calls/"
+polysolver_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/polysolver_calls/3532/polysolver_calls/"
+hlala_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/hlala_calls/3532/hlala_calls/"
+kourami_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/kourami_calls/"
+benchmark_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/assets/benchmarking_results_claeys.csv"
 #samplename <- "3532"
 hlala <- toolOutputToR.HLA_LA(hlala_in, mhci_only = T, trim = T)
-print("hlala")
-print(hlala)
 optitype <- toolOutputToR.Optitype(optitype_in)
-print("optitype")
-print(optitype)
 polysolver <- toolOutputToR.Polysolver(polysolver_in, trim = T)
-print("polysolver")
-print(polysolver)
 kourami <- toolOutputToR.kourami(kourami_in, mhci_only = T, trim = T)
-print("kourami")
-print(kourami)
 combined <- rbind(hlala, optitype, polysolver, kourami)
 rownames(combined) <- c("hlala", "optitype", "polysolver", "kourami")
 combined$tool <- rownames(combined)
 combined$sample <- rep(samplename, nrow(combined))
 
-print("combined")
-print(combined)
 # Read in benchmarking (might not be necessary - just using optitype as best)
 benchmark <- read.csv(benchmark_in)
 benchmark <- benchmark %>% dplyr::filter(tool %in% c("HLA*LA", "Kourami", "Optitype", "Polysolver") & seq_type == "WES")
@@ -93,22 +89,50 @@ benchmark$tool <- c("hlala", "kourami", "optitype", "polysolver")
 # rename cols
 colnames(combined) <- c("A1", "A2", "B1", "B2", "C1", "C2", "tool", "sample")
 
+### the commented out code tests out different different scenarios
+# calls_all_identical <- list(optitype = "03:01", polysolver = "03:01",  kourami = "03:01", hlala = "03:01")
+# calls_none_identical <- list(optitype = "03:01", polysolver = "04:01",  kourami = "05:01", hlala = "06:01")
+# calls_optitype_na <- list(optitype = NA, polysolver = "04:01",  kourami = "05:01", hlala = "06:01")
+# calls_kourami_na <- list(optitype = "02:01", polysolver = "04:01",  kourami = NA, hlala = "04:01")
+# calls_tie <- list(optitype = "02:01", polysolver = "02:01",  kourami = "05:01", hlala = "05:01")
+# calls_tie_comp <- outer(calls_tie, calls_tie, FUN = are_vectors_identical_vectorised)
+# majority_vote_comparison(calls_tie_comp, calls_tie_comp, benchmark, "A")
+# 
+# calls_kourami_na <- calls_kourami_na[not_na(calls_kourami_na)]
+# calls_kourami_na_comp <- outer(calls_kourami_na, calls_kourami_na, FUN = are_vectors_identical_vectorised)
+# majority_vote_comparison(calls_kourami_na_comp, calls_kourami_na_comp, benchmark, "A")
+# 
+# calls_optitype_na <- calls_optitype_na[not_na(calls_optitype_na)]
+# calls_optitype_na_comp <- outer(calls_optitype_na, calls_optitype_na, FUN = are_vectors_identical_vectorised)
+# majority_vote_comparison(calls_kourami_na_comp, calls_optitype_na, benchmark, "A")
+# 
+# call_only_kourami <- list(optitype = NA, polysolver = NA,  kourami = "06:01", hlala = NA)
+# call_only_kourami <- call_only_kourami[not_na(call_only_kourami)]
+# call_only_kourami_comp <- outer(call_only_kourami, call_only_kourami, FUN = are_vectors_identical_vectorised)
+# majority_vote_comparison(call_only_kourami_comp, call_only_kourami, benchmark, "A")
+# 
+# call_two_tools_identical <- list(optitype = c(NA,NA), polysolver = c(NA,NA),  kourami = c("06:01","06:01"), hlala = c("06:01", "06:01"))
+# call_two_tools_identical <- call_two_tools_identical[not_na(call_two_tools_identical)]
+# call_two_tools_identical_comp <- outer(call_two_tools_identical, call_two_tools_identical, FUN = are_vectors_identical_vectorised)
+# outfile <- majority_vote_comparison(call_two_tools_identical_comp, call_two_tools_identical, benchmark, "A")
+
 # Run majority voting for HLA-A
 A_list <- df_to_list(combined, cols = c("A1", "A2"))
-print("df to list A")
-print(A_list)
-A_identical <- outer(A_list, A_list, FUN = are_vectors_identical_vectorised)
-A_vote <- majority_vote2(A_identical, A_list)
-
+A_list_notna <- A_list[not_na(A_list)]
+A_identical <- outer(A_list_notna, A_list_notna, FUN = are_vectors_identical_vectorised)
+A_vote <- majority_vote_comparison(A_identical, A_list, benchmark, "A")
+print(A_vote)
 # Run majority voting for HLA-B
 B_list <- df_to_list(combined, cols = c("B1", "B2"))
-B_identical <- outer(B_list, B_list, FUN = are_vectors_identical_vectorised)
-B_vote <- majority_vote2(B_identical, B_list)
+B_list_notna <- B_list[not_na(B_list)]
+B_identical <- outer(B_list_notna, B_list_notna, FUN = are_vectors_identical_vectorised)
+B_vote <- majority_vote_comparison(B_identical, B_list, benchmark, "B")
 
 # Run majority voting for HLA-C
 C_list <- df_to_list(combined, cols = c("C1", "C2"))
-C_identical <- outer(C_list, C_list, FUN = are_vectors_identical_vectorised)
-C_vote <- majority_vote2(C_identical, C_list)
+C_list_notna <- C_list[not_na(C_list)]
+C_identical <- outer(C_list_notna, C_list_notna, FUN = are_vectors_identical_vectorised)
+C_vote <- majority_vote_comparison(C_identical, C_list, benchmark, "C")
 
 # prepare outputs: table with all calls across all tools, table with majority voting result
 rownames(combined) <- NULL

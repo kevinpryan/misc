@@ -5,8 +5,6 @@ df_to_list <- function(df, cols = c()) {
   for (i in 1:nrow(df)) {
     listdf <- df[i, which(colnames(df) %in% cols)]
     vec <- c(listdf[1, 1], listdf[1, 2])
-    print("vec...")
-    print(vec)
     if (!all(is.na(vec))){
     vec_sorted <- sort(vec)
     names(vec_sorted) <- cols
