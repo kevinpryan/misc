@@ -92,6 +92,10 @@ workflow HLATYPING {
         ch_hlatyping_outputs_grouped,
         ch_benchmark
     )
-    MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
-    MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }   
+    //MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
+MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
+    
+//MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', newLine: true, keepHeader: true, skip: 2, sort: { it[0] }) { it[1] }   
+MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', keepHeader: true, skip: 2, sort: { it[0] }) { it[1] }
+
 }
