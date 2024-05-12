@@ -127,6 +127,11 @@ colnames(combined) <- c("A1", "A2", "B1", "B2", "C1", "C2", "tool", "sample")
 # call_two_tools_identical_comp <- outer(call_two_tools_identical, call_two_tools_identical, FUN = are_vectors_identical_vectorised)
 # outfile <- majority_vote_comparison(call_two_tools_identical_comp, call_two_tools_identical, benchmark, "A")
 
+all_na <- list(optitype = c(NA,NA), polysolver = c(NA,NA),  kourami = c(NA,NA), hlala = c(NA, NA))
+all_na <- all_na[not_na(all_na)]
+all_na_identical <- outer(all_na, all_na, FUN = are_vectors_identical_vectorised)
+outfile <- majority_vote_comparison(comparison = all_na_identical, calls = all_na, benchmark = benchmark, hla = "A")
+
 # Run majority voting for HLA-A
 A_list <- df_to_list(combined, cols = c("A1", "A2"))
 print("A_list")
