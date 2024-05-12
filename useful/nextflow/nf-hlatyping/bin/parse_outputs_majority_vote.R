@@ -17,7 +17,7 @@ library(vroom)
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/majority_voting.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/df_to_list.R")
 # source("~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/bin/are_vectors_identical.R")
-#box::purge_cache()
+box::purge_cache()
 box::use(lib/HLA_LA_conversion[...])
 box::use(lib/Optitype_conversion[...])
 box::use(lib/Polysolver_conversion[...])
@@ -61,12 +61,12 @@ opt$benchmark -> benchmark_in
 
 # Read in files
 
-samplename <- "3532"
-optitype_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/optitype_calls/3532/optitype_calls/"
-polysolver_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/polysolver_calls/3532/polysolver_calls/"
-hlala_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/hlala_calls/3532/hlala_calls/"
-kourami_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/kourami_calls/"
-benchmark_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/assets/benchmarking_results_claeys.csv"
+#samplename <- "3532"
+#optitype_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/optitype_calls/3532/optitype_calls/"
+#polysolver_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/polysolver_calls/3532/polysolver_calls/"
+#hlala_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/hlala_calls/3532/hlala_calls/"
+#kourami_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/kourami_calls/"
+#benchmark_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/assets/benchmarking_results_claeys.csv"
 #samplename <- "3532"
 hlala <- toolOutputToR.HLA_LA(hlala_in, mhci_only = T, trim = T)
 optitype <- toolOutputToR.Optitype(optitype_in)
@@ -90,7 +90,14 @@ benchmark$tool <- c("hlala", "kourami", "optitype", "polysolver")
 colnames(combined) <- c("A1", "A2", "B1", "B2", "C1", "C2", "tool", "sample")
 
 ### the commented out code tests out different different scenarios
-# calls_all_identical <- list(optitype = "03:01", polysolver = "03:01",  kourami = "03:01", hlala = "03:01")
+#calls_all_identical <- list(optitype = "03:01", polysolver = "03:01",  kourami = "03:01", hlala = "03:01")
+#calls_all_identical <- data.frame(A1 = rep("03:01",4), A2 = rep("05:01", 4), B1 = rep("01:01", 4), B2 = rep("02:02",4), C1 = rep("03:03",4), C2 = rep("06:01",4))
+#rownames(calls_all_identical) <- c("hlala", "kourami", "optitype", "polysolver")
+#A_list_test <- df_to_list(calls_all_identical, cols = c("A1", "A2"))
+#A_list_test_notna <- A_list_test[not_na(A_list_test)]
+#A_test_identical <- outer(A_list_test_notna, A_list_test_notna, FUN = are_vectors_identical_vectorised)
+#A_test_identical_vote <- majority_vote_comparison(A_test_identical, A_list_test_notna, benchmark, "A")
+
 # calls_none_identical <- list(optitype = "03:01", polysolver = "04:01",  kourami = "05:01", hlala = "06:01")
 # calls_optitype_na <- list(optitype = NA, polysolver = "04:01",  kourami = "05:01", hlala = "06:01")
 # calls_kourami_na <- list(optitype = "02:01", polysolver = "04:01",  kourami = NA, hlala = "04:01")
@@ -143,6 +150,8 @@ C_vote <- majority_vote_comparison(C_identical, C_list, benchmark, "C")
 rownames(combined) <- NULL
 full_output <- combined %>% relocate(., sample, .before = A1) %>% relocate(., tool, .before = A1)
 write.table(full_output, quote = F, row.names = F, sep = "\t", file = paste(samplename, "_all_calls_mhci.tsv", sep = ""))
+dummy_output <- data.frame(x = c(1,2), y = c(3,4))
+write.table(dummy_output, file = "dummy_out8.txt")
 
 majority_output <- data.frame(sample = samplename)
 majority_output$A1 <- A_vote["A1"]

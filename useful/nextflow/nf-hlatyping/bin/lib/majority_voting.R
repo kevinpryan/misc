@@ -8,6 +8,7 @@ majority_vote <- function(comparison, calls) {
     output <- calls[["optitype"]]
     # all agree, doesn't matter which one we go with
   } else if (max(colSums(comparison)) == 4) {
+    print("all identical and all not NA - go for optitype")
     output <- calls[["optitype"]]
   } else if (max(colSums(comparison)) == 3) {
     print("max colsums is 3")
@@ -176,14 +177,16 @@ majority_vote_comparison <- function(comparison, calls, benchmark, hla) {
   tie_calls <- rownames(comparison)[tie_indices[,1]]
   # Get row and column indices of maximum values
   max_indices <- which(comparison == max(comparison), arr.ind = TRUE)
+  print("max_indices")
+  print(max_indices)
   # If there's only one maximum value, return the corresponding row name
   if (nrow(max_indices) == 1) {
-    #print("only 1 max value")
+    print("only 1 max value")
     tool_chosen <- rownames(comparison)[max_indices[1,1]]
     return(calls[[tool_chosen]])
   # If there's no tie, return the call with the highest frequency
   } else if (length(tie_calls) == 1) {
-    #print("no tie")
+    print("no tie")
     return(calls[[tie_calls[1]]])
   } else if (max(colSums(comparison)) == 0) {
     tool_chosen = rownames(comparison)[which.min(ranks[rownames(comparison)])]
@@ -192,7 +195,7 @@ majority_vote_comparison <- function(comparison, calls, benchmark, hla) {
     # If there's a tie, return the call from the tool with the highest rank
     #print("there's a tie")
     tool_chosen <- tie_calls[which.min(ranks[tie_calls])]
-    return(calls[["tool_chosen"]])
+    return(calls[[tool_chosen]])
   }
 }
 
