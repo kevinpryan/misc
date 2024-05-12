@@ -6,15 +6,15 @@ workflow optitype{
     convert bam to fastq then run Optitype
     */
     take: 
-    subsetbam
+    bam
     //dna_rna
 
     main:
     bam2fastq(
-        subsetbam
+        bam
     )
     RUN_OPTITYPE(
-        bam2fastq.out.subsetfastq//,
+        bam2fastq.out.convertedfastqs//,
         //dna_rna
     )
     emit:

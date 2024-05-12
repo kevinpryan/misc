@@ -8,7 +8,7 @@ process RUN_HLALA{
     script:
     """
     mkdir -p hlala_calls
-    HLA-LA.pl --BAM *.bam --customGraphDir ${graphdir} --graph PRG_MHC_GRCh38_withIMGT --workingDir . --sampleID ${meta.sample} --maxThreads ${task.cpus}
+    HLA-LA.pl --BAM *sorted*.bam --customGraphDir ${graphdir} --graph PRG_MHC_GRCh38_withIMGT --workingDir . --sampleID ${meta.sample} --maxThreads ${task.cpus}
     cp "${meta.sample}/hla/R1_bestguess_G.txt" hlala_calls
     """
 }

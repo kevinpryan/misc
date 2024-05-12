@@ -23,7 +23,7 @@ workflow polysolver{
         subsetbam
     )
     realignwithoutAlt(
-        bam2fastq.out.subsetfastq,
+        bam2fastq.out.convertedfastqs,
         reference,
         reference_basename
         ) 

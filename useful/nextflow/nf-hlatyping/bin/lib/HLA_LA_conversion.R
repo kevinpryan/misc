@@ -24,7 +24,6 @@ toolOutputToR.HLA_LA <- function(outputFolder, mhci_only = F, trim = F) {
   for (i in 1:length(fileList)) {
     # Load in file as R object
     data <- read.delim(file = paste(outputFolder, fileList[i], sep = "/"), sep = "\t", header = TRUE)
-    
     # Extract sample ID
     IDs[i] <- strsplit(fileList[i], "_")[[1]][1]
     

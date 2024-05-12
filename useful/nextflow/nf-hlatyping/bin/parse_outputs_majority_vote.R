@@ -68,15 +68,32 @@ opt$benchmark -> benchmark_in
 #kourami_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/kourami_calls/"
 #benchmark_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/assets/benchmarking_results_claeys.csv"
 #samplename <- "3532"
+#optitype_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/optitype_calls/3532/optitype_calls/"
+#polysolver_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/polysolver_calls/3532/polysolver_calls/"
+#hlala_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/hlala_calls/3532/hlala_calls/"
+#kourami_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/test_outputs/kourami_calls/"
+#benchmark_in <- "~/Documents/PhD/misc/useful/nextflow/nf-hlatyping/assets/benchmarking_results_claeys.csv"
+#samplename <- "3532"
+#print("trying to find hlala output dir")
+#fileList <- list.files(path = outputFolder, pattern = "*_bestguess_G.txt$")
+print("reading in hlala")
 hlala <- toolOutputToR.HLA_LA(hlala_in, mhci_only = T, trim = T)
+print(hlala)
+print("reading in optitype...")
 optitype <- toolOutputToR.Optitype(optitype_in)
+print(optitype)
+print("reading in polysolver...")
 polysolver <- toolOutputToR.Polysolver(polysolver_in, trim = T)
+print(polysolver)
+print("reading in kourami...")
 kourami <- toolOutputToR.kourami(kourami_in, mhci_only = T, trim = T)
+print(kourami)
+print("combining...")
 combined <- rbind(hlala, optitype, polysolver, kourami)
 rownames(combined) <- c("hlala", "optitype", "polysolver", "kourami")
 combined$tool <- rownames(combined)
 combined$sample <- rep(samplename, nrow(combined))
-
+print(combined)
 # Read in benchmarking (might not be necessary - just using optitype as best)
 benchmark <- read.csv(benchmark_in)
 benchmark <- benchmark %>% dplyr::filter(tool %in% c("HLA*LA", "Kourami", "Optitype", "Polysolver") & seq_type == "WES")
@@ -130,9 +147,16 @@ outfile <- majority_vote_comparison(comparison = all_na_identical, calls = all_n
 
 # Run majority voting for HLA-A
 A_list <- df_to_list(combined, cols = c("A1", "A2"))
+print("A_list")
+print(A_list)
 A_list_notna <- A_list[not_na(A_list)]
+print("A_list_notna")
+print(A_list_notna)
 A_identical <- outer(A_list_notna, A_list_notna, FUN = are_vectors_identical_vectorised)
+print("A_identical")
+print(A_identical)
 A_vote <- majority_vote_comparison(A_identical, A_list, benchmark, "A")
+print("A_vote")
 print(A_vote)
 # Run majority voting for HLA-B
 B_list <- df_to_list(combined, cols = c("B1", "B2"))
@@ -160,4 +184,6 @@ majority_output$B1 <- B_vote["B1"]
 majority_output$B2 <- B_vote["B2"]
 majority_output$C1 <- C_vote["C1"]
 majority_output$C2 <- C_vote["C2"]
+print("majority vote output")
+print(majority_output)
 write.table(majority_output, quote = F, row.names = F, sep = "\t", file = paste(samplename, "_majority_vote_mhci.tsv", sep = ""))

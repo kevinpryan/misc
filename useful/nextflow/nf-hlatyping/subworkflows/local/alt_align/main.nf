@@ -34,6 +34,7 @@ workflow alt_align{
     markduplicates(
         samtools_sorted_index
     )
+    /*
     extractContigs(
         ch_hlatypes,
         ch_ref,
@@ -52,7 +53,9 @@ workflow alt_align{
         ch_ref,
         fasta_index_bed.out.fasta_bed
     )
+    */
     emit: 
-    subsetBam.out.subsetbam
+    //subsetBam.out.subsetbam
+    markduplicates.out.markdupbam
 }
 

@@ -13,7 +13,21 @@ process subsetBam{
     path("*_subset.sorted.bam.header") 
     script:
     """
-    samtools view -o ${meta.sample}_subset1.bam -b ${bamfile} -L ${fasta_bed}
+    samtools view -o ${meta.sample}_subset.bam -b ${bamfile} -F 256 chr6:29500000-33200000 chr6_* HLA*
+    samtools sort -o ${meta.sample}_subset.sorted.bam ${meta.sample}_subset.bam
+    sambamba index ${meta.sample}_subset.sorted.bam
+    samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
+    samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
+    """
+}
+
+/*
+    samtools view -o ${meta.sample}_subset.bam -b ${bamfile} chr6 chr6_* HLA* "*"
+
+
+    samtools view -o ${meta.sample}_subset.bam -b ${bamfile} -F 256 chr6:29500000-33200000 chr6_* HLA*
+
+samtools view -o ${meta.sample}_subset1.bam -b ${bamfile} -L ${fasta_bed}
     samtools view -o ${meta.sample}_subset2.bam -b ${bamfile} "*"
     samtools view -o ${meta.sample}_subset3.bam -b ${bamfile} 'chr6:28509970-33480727'
     samtools merge ${meta.sample}_subset.bam ${meta.sample}_subset1.bam ${meta.sample}_subset2.bam ${meta.sample}_subset3.bam
@@ -21,6 +35,4 @@ process subsetBam{
     sambamba index ${meta.sample}_subset.sorted.bam
     samtools view -H ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.header
     samtools flagstat ${meta.sample}_subset.sorted.bam > ${meta.sample}_subset.sorted.bam.flagstat
-    """
-}
-//     tuple val(meta), path("*_subset.sorted.bam"), path("*_subset.sorted.bam.bai"), emit: subsetbam
+*/

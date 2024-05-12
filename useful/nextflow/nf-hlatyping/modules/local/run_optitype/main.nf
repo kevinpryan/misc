@@ -11,9 +11,11 @@ process RUN_OPTITYPE{
     //tuple val(meta), path("*.pdf")
     script:
     """
+    gunzip *.gz
     OptiTypePipeline.py --input *.1.fq *.2.fq --verbose --${meta.seq_type} --outdir ${meta.sample}
     mkdir -p optitype_calls
     cp "${meta.sample}"/*/*.tsv optitype_calls
     cp "${meta.sample}"/*/*.pdf optitype_calls
+    rm *.fq
     """
 }
