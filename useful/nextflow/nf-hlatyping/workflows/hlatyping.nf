@@ -8,6 +8,7 @@ include { hlala } from "../subworkflows/local/hlala"
 include { kourami } from "../subworkflows/local/kourami"
 include { FASTP } from "../modules/nf-core/fastp"
 include { MAJORITY_VOTE } from "../modules/local/majority_voting"
+include { SORT_RESULTS } from "../modules/local/sort_results"
 
 workflow HLATYPING {
     // TODO: add samplesheet check, seq_type should be in dna,rna 
@@ -92,10 +93,8 @@ workflow HLATYPING {
         ch_hlatyping_outputs_grouped,
         ch_benchmark
     )
-    //MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', newLine: true, keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
-MAJORITY_VOTE.out.majority_vote.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_majority_vote.tsv', keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }
-    
-//MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', newLine: true, keepHeader: true, skip: 2, sort: { it[0] }) { it[1] }   
-MAJORITY_VOTE.out.all_calls.collectFile(storeDir: "${params.outdir}/combined_results", name: 'nf_core_hlatyping_results_all_calls.tsv', keepHeader: true, skip: 2, sort: { it[0] }) { it[1] }
-
+MAJORITY_VOTE.out.majority_vote.collectFile(name: 'nf_core_hlatyping_results_majority_vote_combined.tsv', keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }.set{ majority_ch}
+MAJORITY_VOTE.out.all_calls.collectFile(name: 'nf_core_hlatyping_results_all_calls.tsv', keepHeader: true, skip: 1, sort: { it[0] }) { it[1] }.set{all_calls_ch}
+mixed_ch = majority_ch.mix(all_calls_ch)
+SORT_RESULTS(mixed_ch)
 }

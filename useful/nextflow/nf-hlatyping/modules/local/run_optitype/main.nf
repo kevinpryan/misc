@@ -12,10 +12,13 @@ process RUN_OPTITYPE{
     script:
     """
     gunzip *.gz
-    OptiTypePipeline.py --input *.1.fq *.2.fq --verbose --${meta.seq_type} --outdir ${meta.sample}
+    OptiTypePipeline.py --input *.1.fq *.2.fq --verbose --dna --outdir ${meta.sample}
     mkdir -p optitype_calls
     cp "${meta.sample}"/*/*.tsv optitype_calls
     cp "${meta.sample}"/*/*.pdf optitype_calls
     rm *.fq
     """
 }
+
+    //OptiTypePipeline.py --input *.1.fq *.2.fq --verbose --${meta.seq_type} --outdir ${meta.sample}
+
