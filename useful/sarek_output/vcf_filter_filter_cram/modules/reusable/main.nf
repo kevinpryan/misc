@@ -28,15 +28,15 @@ process VCF2BED {
 
 process SUBSET_CRAM {
     label 'samtools_container'
-    publishDir "$params.outdir/subset_cram/${patient}", mode: 'copy'
+    publishDir "$params.outdir/subset_cram/${sample}", mode: 'copy'
     input:
-    tuple val(patient), path(cram), path(bed)
+    tuple val(sample), path(cram), path(bed)
     path(fasta)
     output:
-    tuple val(patient), path("*_subset_mutect2.bam"), path("*_subset_mutect2.bam.bai")
+    tuple val(sample), path("*_subset_mutect2.bam"), path("*_subset_mutect2.bam.bai")
     script:
     """
-    samtools view --reference $fasta -bL $bed -o ${patient}_subset_mutect2.bam $cram
-    samtools index ${patient}_subset_mutect2.bam
+    samtools view --reference $fasta -bL $bed -o ${sample}_subset_mutect2.bam $cram
+    samtools index ${sample}_subset_mutect2.bam
     """
 }

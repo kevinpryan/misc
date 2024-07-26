@@ -37,11 +37,14 @@ norm_vcfs_input = vcf_cram_pairs_caf
 ch_fasta = Channel.fromPath(params.fasta, checkIfExists: true)
                   .collect()
 
+
 workflow {
     VCF2BED(norm_vcfs_input)
     ch_bed_cram = VCF2BED.out.bed_from_vcf.join(vcf_cram_combined_full)
-    ch_bed_cram_caf = ch_bed_cram.map { it -> [it[0], it[3], it[1]] }.groupTuple()
-    ch_bed_cram_tan = ch_bed_cram.map { it -> [ it[0], it[6], it[1]]}.groupTuple()
+    //index 2 is caf samplename, index 5 is tan samplename
+    ch_bed_cram_caf = ch_bed_cram.map { it -> [it[2], it[3], it[1]] }.groupTuple()
+    ch_bed_cram_tan = ch_bed_cram.map { it -> [ it[5], it[6], it[1]]}.groupTuple()
     SUBSET_CRAM_CAF(ch_bed_cram_caf, ch_fasta)
     SUBSET_CRAM_TAN(ch_bed_cram_tan, ch_fasta)
 }
+

@@ -1,5 +1,5 @@
 #!/usr/bin/env nextflow
-params.reads = '/home/kevin/Documents/PhD/wes_bc/dummy_files/subset_rnaseq_12lines/sub_ar-sub*_{1,2}.fastq.gz.gz'
+//params.reads = '/home/kevin/Documents/PhD/wes_bc/dummy_files/subset_rnaseq_12lines/sub_ar-sub*_{1,2}.fastq.gz.gz'
 //params.reads = '/home/kevin/Documents/PhD/wes_bc/dummy_files/dummy_files_all/*_R{1,2}_001.fastq.gz'
 params.outdir = "."
 process COUNT_READS{
