@@ -1,6 +1,13 @@
+#!/usr/bin/env nextflow
+
 process fastqc{
     publishDir "${params.outdir}/${meta.sample}/fastqc"
-
+  conda (params.enable_conda ? "bioconda::fastqc=0.12.1" : null)
+    if (workflow.containerEngine == 'singularity' && !params.pull_docker_container) {
+        container "https://depot.galaxyproject.org/singularity/fastqc:0.12.1--hdfd78af_0"
+    } else {
+        container "quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0"
+    }
  input:
  tuple val(meta), path(reads)
  //val parstr
@@ -17,6 +24,12 @@ process fastqc{
 }
 
 process multiqc{
+conda (params.enable_conda ? "bioconda::multiqc=1.24" : null)
+    if (workflow.containerEngine == 'singularity' && !params.pull_docker_container) {
+        container "https://depot.galaxyproject.org/singularity/multiqc:1.24--pyhdfd78af_0"
+    } else {
+        container "quay.io/biocontainers/multiqc:1.24--pyhdfd78af_0"
+    }
     publishDir "${params.outdir}/multiqc"
     input:
     path metric_files
@@ -31,7 +44,13 @@ process multiqc{
 }
 
 process strandedness{
-    publishDir "${params.outdir}/${meta.sample}/strandedness"
+   conda (params.enable_conda ? "bioconda::how_are_we_stranded_here=1.0.1" : null)
+   if (workflow.containerEngine == 'singularity' && !params.pull_docker_container) {
+        container "https://depot.galaxyproject.org/singularity/how_are_we_stranded_here:1.0.1--pyhfa5458b_0"
+    } else {
+        container "quay.io/biocontainers/how_are_we_stranded_here:1.0.1--pyhfa5458b_0"
+    }
+    publishDir "${params.outdir}/strandedness"
     input:
     tuple val(meta), path(reads)
     path gtf
@@ -40,7 +59,7 @@ process strandedness{
     path "*_strandedness.txt", emit: strandedness
     script:
     """
-    check_strandedness -g ${gtf} -fa ${fasta} -r1 *1.fq.gz -r2 *2.fq.gz > ${meta.sample}_strandedness.txt
+    check_strandedness -g ${gtf} -fa ${fasta} -r1 *1.fastq.gz -r2 *2.fastq.gz > ${meta.sample}_strandedness.txt
     """
 }
 workflow {
