@@ -25,7 +25,7 @@ workflow HLATYPING {
     save_trimmed_fail
     save_merged
     adapter_fasta
-    
+    subset_regions    
     main:
     reference_basename = Channel.value(reference_basename)
     ch_ref = file(reference_dir, checkIfExists: true)
@@ -35,6 +35,7 @@ workflow HLATYPING {
     ch_ref_kourami = file(kourami_ref, checkIfExists: true)
     ch_db_kourami = file(kourami_database, checkIfExists: true)
     ch_benchmark = file("$projectDir/assets/benchmarking_results_claeys.csv", checkIfExists: true)
+    ch_subset_regions = file(subset_regions, checkIfExists: true)
     if (trimmer == 'fastp') {
     //ch_adapter_fasta = Channel.empty()
     FASTP (
@@ -52,7 +53,8 @@ workflow HLATYPING {
     ch_ref,
     ch_hlatypes,
     reference_basename,
-    chromosome
+    chromosome,
+    ch_subset_regions
     )
     optitype(
         alt_align.out//,
@@ -63,10 +65,12 @@ workflow HLATYPING {
         ch_ref,
         reference_basename
     )
+    
     hlala(
         alt_align.out,
         ch_graph
-    ) 
+    )
+     
     kourami(
         alt_align.out,
         ch_db_kourami,
@@ -79,9 +83,15 @@ workflow HLATYPING {
     // docker image: r-basic:dev
 
     // untested on real data from here on in
+   
     optitype.out.mix(kourami.out, polysolver.out, hlala.out)
            .groupTuple(by: 0, size: 4)
            .set{ ch_hlatyping_outputs }
+    /*
+    optitype.out.mix(kourami.out, polysolver.out)
+           .groupTuple(by: 0, size: 3)
+           .set{ ch_hlatyping_outputs }
+    */
     ch_hlatyping_outputs
                     .map{meta, results ->
                         //[ meta, results.collect { it.getParent() } ]

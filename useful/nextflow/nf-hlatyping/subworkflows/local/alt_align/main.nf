@@ -18,6 +18,7 @@ workflow alt_align{
     ch_hlatypes
     reference_basename
     chr
+    ch_subset_regions
     main:
     bwa_mem_align_alt_postalt(
        ch_ref,
@@ -34,7 +35,7 @@ workflow alt_align{
     markduplicates(
         samtools_sorted_index
     )
-    /*
+// comment out starting here to remove subsetbam
     extractContigs(
         ch_hlatypes,
         ch_ref,
@@ -51,11 +52,12 @@ workflow alt_align{
         extractContigs.out.alt_contigs,
         extractContigs.out.hla_contigs,
         ch_ref,
-        fasta_index_bed.out.fasta_bed
+        fasta_index_bed.out.fasta_bed,
+        ch_subset_regions
     )
-    */
+// comment out ending here to remove subsetbam
     emit: 
-    //subsetBam.out.subsetbam
-    markduplicates.out.markdupbam
+    subsetBam.out.subsetbam
+    //markduplicates.out.markdupbam
 }
 

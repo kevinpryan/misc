@@ -25,7 +25,8 @@ workflow {
         params.trimmer,
         params.save_trimmed_fail,
         params.save_merged,
-        params.adapter_fasta
+        params.adapter_fasta,
+        params.subset_regions
     )
 }
 
