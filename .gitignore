@@ -32,3 +32,9 @@ bwakit-0.7.15*
 bwa-0.7.15*
 outdir
 *.out
+*.BED*
+*.bed*
+*-bed*
+*.gtf
+Hsap38.txt
+lincs_in_both.txt
